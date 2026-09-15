@@ -10,7 +10,7 @@ export default defineConfig({
     environment: 'jsdom',
     environmentOptions: {
       jsdom: {
-        url: 'http://localhost/FitLog/',
+        url: 'http://localhost/SmithNote/',
       },
     },
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],

@@ -28,7 +28,7 @@
 - 通常の記録データは端末の `localStorage` に保存され、未ログインでもローカル完結で利用できます。
 - Firebase設定がある環境では、希望するユーザーだけメールアドレス・パスワードでログインし、手動クラウドバックアップ/復元を利用できます。
 - モバイル優先のレイアウトで、起動直後から記録を始められます。
-- GitHub Pagesでは `/FitLog/` にランディングページ、`#/privacy` と `#/terms` に公開文書を配信します。
+- GitHub Pagesでは `/SmithNote/` にランディングページ、`#/privacy` と `#/terms` に公開文書を配信します。
 
 ### 1.1 設計思想
 
@@ -76,13 +76,13 @@ npm run format       # prettier --write
 - `npm run build:ios` は `vite build --mode capacitor` を実行し、Capacitor の WebView で読み込める相対パスの Web アセットを生成します。
 - `npm run cap:sync:ios` は `build:ios` の後に `cap sync ios` で `dist/` を `ios/` プロジェクトへ同期します。
 
-GitHub Pagesのトップ `/FitLog/` はランディングページ、`/FitLog/app/` はアプリ本体です。「アプリを使う」から記録画面を開けます。両方を1回のビルド・デプロイで更新します。
+GitHub Pagesのトップ `/SmithNote/` はランディングページ、`/SmithNote/app/` はアプリ本体です。「アプリを使う」から記録画面を開けます。両方を1回のビルド・デプロイで更新します。
 
 ### 2.2 ビルド設定（`vite.config.ts`）
 
 | 区分 | 設定 | 内容 |
 | --- | --- | --- |
-| 通常ビルド | `base: '/FitLog/'` | LPと `app/index.html` の2つのエントリを生成する |
+| 通常ビルド | `base: '/SmithNote/'` | LPと `app/index.html` の2つのエントリを生成する |
 | Capacitor ビルド | `mode: 'capacitor'` / `base: './'` | アプリ本体エントリを使い、WebView向け相対パスにする |
 | エントリ分岐 | `import.meta.env.MODE` | 通常時はLPと `/app/` のアプリ本体、Capacitor modeではアプリ本体だけをバンドルする |
 | LP設定 | `src/landing/config.ts` | App Store URL、問い合わせ先、canonical URL、文書更新日を集約する |

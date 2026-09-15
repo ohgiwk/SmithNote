@@ -3,10 +3,11 @@
 ## GitHub / GitHub Pages
 
 1. GitHubでリポジトリ名を `FitLog` から `SmithNote` へ変更する。
+   - ローカルの接続先も `git remote set-url origin git@github.com:ohgiwk/SmithNote.git` で更新する。
 2. PagesのSourceがGitHub Actionsになっていることを確認する。
 3. Actions Variablesへ `VITE_CANONICAL_URL=https://ohgiwk.github.io/SmithNote/` を登録する。
 4. App Store公開後に `VITE_APP_STORE_URL`、問い合わせ先確定後に `VITE_CONTACT_EMAIL` を登録する。
-5. `/SmithNote/`、`/SmithNote/#/privacy`、`/SmithNote/#/terms` の表示を確認する。
+5. `/SmithNote/`、`/SmithNote/app/`、`/SmithNote/#/privacy`、`/SmithNote/#/terms` の表示を確認する。
 
 ## App Store / Firebase
 

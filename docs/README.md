@@ -9,7 +9,7 @@ SmithNote の仕様・設計ドキュメントの入口です。
 - 通常の記録データは端末の `localStorage` に保存され、未ログインでもローカル完結で使えます。
 - Firebase設定がある環境では、希望するユーザーだけメールアドレス・パスワードでログインし、手動クラウドバックアップ/復元を利用できます。
 - モバイル優先で、起動直後から選択日のトレーニングを記録できます。
-- GitHub Pagesではランディングページ、プライバシーポリシー、利用規約を `/FitLog/` で公開します。`main` への push でデプロイが自動実行されます。
+- GitHub Pagesではランディングページ・公開文書を `/SmithNote/`、アプリ本体を `/SmithNote/app/` で公開します。`main` への push でデプロイが自動実行されます。
 
 ## ドキュメント一覧
 
@@ -91,6 +91,43 @@ npm run test:e2e     # Playwright E2E
 npm run test:e2e:ui  # Playwright UI モード
 ```
 
+## GitHub Pages 公開情報
+
+### 公開 URL
+
+| 公開対象 | URL |
+| --- | --- |
+| ランディングページ | https://ohgiwk.github.io/SmithNote/ |
+| アプリ本体 | https://ohgiwk.github.io/SmithNote/app/ |
+| プライバシーポリシー | https://ohgiwk.github.io/SmithNote/#/privacy |
+| 利用規約 | https://ohgiwk.github.io/SmithNote/#/terms |
+
+ランディングページの「アプリを使う」からアプリ本体へ移動できます。アプリ本体の URL を直接開くこともできます。
+
+### 更新・デプロイ
+
+- リポジトリ: [ohgiwk/SmithNote](https://github.com/ohgiwk/SmithNote)
+- ワークフロー: [Deploy to GitHub Pages](https://github.com/ohgiwk/SmithNote/actions/workflows/deploy-pages.yml)（定義: [deploy-pages.yml](../.github/workflows/deploy-pages.yml)）
+- `main` への push で自動実行します。必要に応じて GitHub Actions の「Run workflow」から手動実行もできます。
+- CI は `npm ci` → `npm run lint` → `npm test` → `npm run build` を実行し、成功した `dist/` を公開します。
+- ランディングページとアプリ本体は1回のビルド・デプロイで同時に更新されます。push 後は Actions の `build` と `deploy` の成功を確認してください。
+- コミット・push はユーザーから依頼された場合だけ行います。
+
+ローカルで公開用ビルドを確認する場合:
+
+```bash
+npm run build
+npm run preview -- --host 127.0.0.1 --port 5174
+```
+
+表示されたサーバーの `/SmithNote/` と `/SmithNote/app/` を確認します。ビルド構成の詳細は [specification.md](./specification.md#22-ビルド設定viteconfigts) を参照してください。
+
+### 公開版の設定・制限
+
+- 2026年9月15日の同時公開時点では、公開版の Firebase は未設定です。初回画面で「あとで」を選ぶと、ログインせずに記録できます。ログイン・クラウドバックアップは利用できません。
+- 記録は利用中のブラウザの `localStorage` に保存されます。iOS アプリや別のブラウザとは自動共有されません。
+- 現在のワークフローでビルドに渡す GitHub Actions Variables は `VITE_APP_STORE_URL`、`VITE_CONTACT_EMAIL`、`VITE_CANONICAL_URL` です。Firebase を有効にする際は、[Firebase 運用メモ](./firebase-backup.md) に従って公開ビルド側の設定も追加します。
+
 ## iOS アプリ化
 
 Capacitor の iOS プロジェクトは `ios/` 配下にあります。
@@ -100,6 +137,4 @@ npm run cap:sync:ios
 npm run cap:open:ios
 ```
 
-`npm run build` は GitHub Pages 用に `/FitLog/` をbaseとするランディングページとアプリ本体を生成します。iOSへ同期する場合は `npm run cap:sync:ios` を使い、モバイルアプリ本体を相対パスで生成してCapacitorへ同期します。
-
-GitHub Pagesのトップ `/FitLog/` はランディングページ、`/FitLog/app/` はアプリ本体です。「アプリを使う」から記録画面を開けます。両方を1回のビルド・デプロイで更新します。
+`npm run build` は GitHub Pages 用に `/SmithNote/` をbaseとするランディングページとアプリ本体を生成します。iOSへ同期する場合は `npm run cap:sync:ios` を使い、モバイルアプリ本体を相対パスで生成してCapacitorへ同期します。

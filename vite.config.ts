@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => {
   const isCapacitorBuild = mode === 'capacitor';
 
   return {
-    base: isCapacitorBuild ? './' : '/FitLog/',
+    base: isCapacitorBuild ? './' : '/SmithNote/',
     plugins: [react()],
     build: {
       rollupOptions: {
