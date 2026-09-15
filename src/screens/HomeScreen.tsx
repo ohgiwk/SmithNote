@@ -600,7 +600,11 @@ export function HomeScreen({ onOverlayStateChange }: HomeScreenProps) {
                 style={{ borderLeftColor: partColors.get(workout.part) }}
               >
                 <h2>
-                  {workout.part} - {workout.name}
+                  <span className="exercise-head-part">{workout.part}</span>
+                  <span className="exercise-head-separator" aria-hidden="true">
+                    ｜
+                  </span>
+                  <span className="exercise-head-name">{workout.name}</span>
                 </h2>
               </header>
               <div className="exercise-body">
