@@ -381,3 +381,39 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+.exercise-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.exercise-search .form-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.exercise-search button {
+  flex-shrink: 0;
+  min-height: 44px;
+}
+.exercise-search-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 4px solid var(--text-tertiary);
+}
+
+.exercise-search-part {
+  flex-shrink: 0;
+  max-width: 35%;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.exercise-search-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

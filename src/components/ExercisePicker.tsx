@@ -35,6 +35,13 @@ export function ExercisePicker({
   onSelectPart,
 }: ExercisePickerProps) {
   const [frequentOpen, setFrequentOpen] = useState(true);
+  const [searchText, setSearchText] = useState('');
+  const query = mode === 'single' ? searchText.normalize('NFKC').trim().toLowerCase() : '';
+  const searchResults = query
+    ? [...groupedExercises.values()]
+        .flat()
+        .filter((exercise) => exercise.name.normalize('NFKC').toLowerCase().includes(query))
+    : [];
   const tabs = [...groupedExercises.keys()];
   const currentPart = activePart && groupedExercises.has(activePart) ? activePart : tabs[0];
   const currentExercises = currentPart ? (groupedExercises.get(currentPart) ?? []) : [];
@@ -61,7 +68,10 @@ export function ExercisePicker({
               role="tab"
               aria-selected={isActive}
               style={isActive && color ? { background: color } : undefined}
-              onClick={() => onSelectPart(part)}
+              onClick={() => {
+                setSearchText('');
+                onSelectPart(part);
+              }}
             >
               {part}
             </button>
@@ -69,7 +79,49 @@ export function ExercisePicker({
         })}
       </div>
       <div className="content">
-        {currentPart && (
+        {mode === 'single' && (
+          <div className="exercise-search">
+            <input
+              className="form-input"
+              type="search"
+              aria-label="種目名で検索"
+              placeholder="種目名で検索"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+            />
+            {searchText && (
+              <button className="small-outline" type="button" onClick={() => setSearchText('')}>
+                クリア
+              </button>
+            )}
+          </div>
+        )}
+        {query && (
+          <section className="part-card" aria-label="検索結果">
+            <div className="part-list-head" role="status">
+              <span className="part-list-label">
+                {searchResults.length
+                  ? `検索結果 ${searchResults.length}件`
+                  : '該当する種目がありません'}
+              </span>
+            </div>
+            <div className="exercise-list">
+              {searchResults.map((exercise) => (
+                <button
+                  className="exercise-option exercise-search-result"
+                  style={{ borderLeftColor: partColors.get(exercise.part) }}
+                  key={exercise.id}
+                  type="button"
+                  onClick={() => onSelectExercise?.(exercise.id)}
+                >
+                  <span className="exercise-search-part">{exercise.part}</span>
+                  <span className="exercise-search-name">{exercise.name}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        {!query && currentPart && (
           <>
             {mode === 'single' && !!frequentExercises.length && (
               <section
