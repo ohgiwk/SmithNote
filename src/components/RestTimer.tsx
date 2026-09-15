@@ -15,17 +15,21 @@ export const restTimerStartEvent = 'smithnote:start-rest-timer';
 type RestTimerProps = {
   defaultSeconds: number;
   autoStartOnIntensity: boolean;
+  alertVolume: number;
   showIdle: boolean;
   onChangeDefaultSeconds: (seconds: number) => void;
   onChangeAutoStart: (enabled: boolean) => void;
+  onChangeAlertVolume: (volume: number) => void;
 };
 
 export function RestTimer({
   defaultSeconds,
   autoStartOnIntensity,
+  alertVolume,
   showIdle,
   onChangeDefaultSeconds,
   onChangeAutoStart,
+  onChangeAlertVolume,
 }: RestTimerProps) {
   const initialSeconds = clampSeconds(defaultSeconds);
   const [selectedSeconds, setSelectedSeconds] = useState(initialSeconds);
@@ -38,10 +42,13 @@ export function RestTimer({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSeconds, setSettingsSeconds] = useState(String(initialSeconds));
   const [settingsAutoStart, setSettingsAutoStart] = useState(autoStartOnIntensity);
+  const [settingsAlertVolume, setSettingsAlertVolume] = useState(alertVolume);
   const audioContextRef = useRef<AudioContext | null>(null);
   const alarmBufferRef = useRef<AudioBuffer | null>(null);
   const alarmBufferPromiseRef = useRef<Promise<AudioBuffer | null> | null>(null);
   const alarmSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const alertVolumeRef = useRef(alertVolume);
+  alertVolumeRef.current = alertVolume;
   const exitTimeoutRef = useRef<number | null>(null);
   const endTimeRef = useRef<number | null>(null);
   const runIdRef = useRef(0);
@@ -119,6 +126,7 @@ export function RestTimer({
             runId,
             runIdRef,
             alarmSourceRef,
+            alertVolumeRef.current,
           );
         }
       }
@@ -130,6 +138,7 @@ export function RestTimer({
   function openSettings() {
     setSettingsSeconds(String(defaultSeconds));
     setSettingsAutoStart(autoStartOnIntensity);
+    setSettingsAlertVolume(alertVolume);
     setSettingsOpen(true);
   }
 
@@ -143,6 +152,7 @@ export function RestTimer({
     setRemaining(seconds);
     onChangeDefaultSeconds(seconds);
     onChangeAutoStart(settingsAutoStart);
+    onChangeAlertVolume(settingsAlertVolume);
     setSettingsOpen(false);
   }
 
@@ -325,6 +335,21 @@ export function RestTimer({
               </button>
             </div>
           </div>
+          <label className="rest-timer-settings-field rest-timer-volume-field">
+            <span>
+              アラート音量
+              <strong>{settingsAlertVolume}%</strong>
+            </span>
+            <input
+              aria-label="レストタイマーのアラート音量"
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={settingsAlertVolume}
+              onChange={(event) => setSettingsAlertVolume(Number(event.target.value))}
+            />
+          </label>
           <div className="confirm-actions">
             <button className="small-outline" type="button" onClick={() => setSettingsOpen(false)}>
               キャンセル
@@ -380,6 +405,7 @@ async function playAlert(
   runId: number,
   runIdRef: { current: number },
   sourceRef: { current: AudioBufferSourceNode | null },
+  alertVolume: number,
 ) {
   if (!context) return;
   try {
@@ -392,8 +418,11 @@ async function playAlert(
   if (!buffer || runId !== runIdRef.current) return;
 
   const source = context.createBufferSource();
+  const gain = context.createGain();
   source.buffer = buffer;
-  source.connect(context.destination);
+  gain.gain.value = Math.max(0, Math.min(1, alertVolume / 100));
+  source.connect(gain);
+  gain.connect(context.destination);
   sourceRef.current = source;
   source.onended = () => {
     if (sourceRef.current === source) sourceRef.current = null;

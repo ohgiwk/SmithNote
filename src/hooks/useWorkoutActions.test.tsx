@@ -34,7 +34,7 @@ const state: State = {
   weightUnit: 'kg',
   themeMode: 'dark',
   notificationSettings: { enabled: false },
-  restTimerSettings: { autoStartOnIntensity: true, defaultSeconds: 60 },
+  restTimerSettings: { autoStartOnIntensity: true, defaultSeconds: 60, alertVolume: 100 },
   catalogVersion: 1,
 };
 

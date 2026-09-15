@@ -5,6 +5,7 @@ import {
   ExerciseGoal,
   ExerciseGoalAchievement,
   GripStyleType,
+  defaultRestTimerAlertVolume,
   defaultRestTimerSeconds,
   gripStyleTypes,
   GripType,
@@ -80,6 +81,7 @@ export function createDefaultState(): State {
     restTimerSettings: {
       autoStartOnIntensity: true,
       defaultSeconds: defaultRestTimerSeconds,
+      alertVolume: defaultRestTimerAlertVolume,
     },
     catalogVersion: starterCatalogVersion,
   };
@@ -152,7 +154,10 @@ function migrateExerciseNotes(state: SavedStateShape): SavedStateShape {
       const exercise = recordOf(value);
       if (!exercise || typeof exercise.id !== 'string') return value;
       const existingNote = typeof exercise.note === 'string' ? exercise.note : '';
-      return { ...exercise, note: existingNote || latestNoteByExercise.get(exercise.id)?.note || '' };
+      return {
+        ...exercise,
+        note: existingNote || latestNoteByExercise.get(exercise.id)?.note || '',
+      };
     }) as State['exercises'],
     workouts: state.workouts.map((value) => {
       const workout = recordOf(value);
@@ -238,7 +243,14 @@ function normalizeRestTimerSettings(value: unknown): State['restTimerSettings'] 
   return {
     autoStartOnIntensity: item?.autoStartOnIntensity !== false,
     defaultSeconds: normalizeRestTimerSeconds(item?.defaultSeconds),
+    alertVolume: normalizeRestTimerAlertVolume(item?.alertVolume),
   };
+}
+
+function normalizeRestTimerAlertVolume(value: unknown): number {
+  const volume = Number(value);
+  if (!Number.isFinite(volume)) return defaultRestTimerAlertVolume;
+  return Math.max(0, Math.min(100, Math.round(volume)));
 }
 
 function normalizeRestTimerSeconds(value: unknown): number {
@@ -246,9 +258,7 @@ function normalizeRestTimerSeconds(value: unknown): number {
 }
 
 function normalizeSchemaVersion(value: unknown): number {
-  return typeof value === 'number' && Number.isInteger(value) && value > 0
-    ? value
-    : 1;
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : 1;
 }
 
 function normalizeUpdatedAt(value: unknown): string {

@@ -13,14 +13,17 @@ describe('RestTimer settings', () => {
     const user = userEvent.setup();
     const onChangeDefaultSeconds = vi.fn();
     const onChangeAutoStart = vi.fn();
+    const onChangeAlertVolume = vi.fn();
 
     render(
       <RestTimer
         defaultSeconds={60}
         autoStartOnIntensity
+        alertVolume={100}
         showIdle
         onChangeDefaultSeconds={onChangeDefaultSeconds}
         onChangeAutoStart={onChangeAutoStart}
+        onChangeAlertVolume={onChangeAlertVolume}
       />,
     );
 
@@ -35,10 +38,14 @@ describe('RestTimer settings', () => {
     await user.clear(secondsInput);
     await user.type(secondsInput, '75');
     await user.click(screen.getByRole('button', { name: 'OFF' }));
+    fireEvent.change(screen.getByRole('slider', { name: 'レストタイマーのアラート音量' }), {
+      target: { value: '65' },
+    });
     await user.click(screen.getByRole('button', { name: '保存' }));
 
     expect(onChangeDefaultSeconds).toHaveBeenCalledWith(75);
     expect(onChangeAutoStart).toHaveBeenCalledWith(false);
+    expect(onChangeAlertVolume).toHaveBeenCalledWith(65);
     expect(screen.queryByRole('dialog', { name: 'レストタイマー設定' })).toBeNull();
   });
 
@@ -47,8 +54,10 @@ describe('RestTimer settings', () => {
     const props = {
       defaultSeconds: 60,
       autoStartOnIntensity: true,
+      alertVolume: 100,
       onChangeDefaultSeconds: vi.fn(),
       onChangeAutoStart: vi.fn(),
+      onChangeAlertVolume: vi.fn(),
     };
     const { rerender } = render(<RestTimer {...props} showIdle />);
 

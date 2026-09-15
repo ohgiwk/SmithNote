@@ -953,6 +953,22 @@
   width: 100%;
 }
 
+.rest-timer-volume-field > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rest-timer-volume-field strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.rest-timer-volume-field input[type='range'] {
+  width: 100%;
+  accent-color: var(--red);
+}
+
 @keyframes rest-timer-bar-in {
   from {
     opacity: 0;

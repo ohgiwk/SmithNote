@@ -89,12 +89,24 @@ describe('normalizeState', () => {
       schemaVersion: 2,
       workouts: [
         {
-          id: 'w1', exerciseId: 'e1', date: '2026-01-01', name: 'ベンチプレス', part: '胸',
-          measurementType: 'reps', sets: [], note: '古いメモ',
+          id: 'w1',
+          exerciseId: 'e1',
+          date: '2026-01-01',
+          name: 'ベンチプレス',
+          part: '胸',
+          measurementType: 'reps',
+          sets: [],
+          note: '古いメモ',
         },
         {
-          id: 'w2', exerciseId: 'e1', date: '2026-02-01', name: 'ベンチプレス', part: '胸',
-          measurementType: 'reps', sets: [], note: '最新のメモ',
+          id: 'w2',
+          exerciseId: 'e1',
+          date: '2026-02-01',
+          name: 'ベンチプレス',
+          part: '胸',
+          measurementType: 'reps',
+          sets: [],
+          note: '最新のメモ',
         },
       ],
     };
@@ -411,17 +423,19 @@ describe('normalizeState', () => {
     expect(result?.restTimerSettings).toEqual({
       autoStartOnIntensity: true,
       defaultSeconds: 60,
+      alertVolume: 100,
     });
   });
 
   it('レストタイマーの自動開始オフ設定を保持する', () => {
     const result = normalizeState({
       ...makeValidSaved(),
-      restTimerSettings: { autoStartOnIntensity: false, defaultSeconds: 90 },
+      restTimerSettings: { autoStartOnIntensity: false, defaultSeconds: 90, alertVolume: 35 },
     } as unknown as Partial<State>);
     expect(result?.restTimerSettings).toEqual({
       autoStartOnIntensity: false,
       defaultSeconds: 90,
+      alertVolume: 35,
     });
   });
 
@@ -433,6 +447,7 @@ describe('normalizeState', () => {
     expect(result?.restTimerSettings).toEqual({
       autoStartOnIntensity: true,
       defaultSeconds: 60,
+      alertVolume: 100,
     });
   });
 

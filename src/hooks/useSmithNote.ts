@@ -14,7 +14,13 @@ import {
   sendTestWorkoutReminderNotification,
   syncWorkoutReminderNotification,
 } from '../notifications';
-import { defaultRestTimerSeconds, Preset, ThemeMode, WeightUnit } from '../types';
+import {
+  defaultRestTimerAlertVolume,
+  defaultRestTimerSeconds,
+  Preset,
+  ThemeMode,
+  WeightUnit,
+} from '../types';
 import { uid } from '../utils';
 
 /**
@@ -102,6 +108,7 @@ export function useSmithNote() {
           ...(current.restTimerSettings ?? {
             autoStartOnIntensity: true,
             defaultSeconds: defaultRestTimerSeconds,
+            alertVolume: defaultRestTimerAlertVolume,
           }),
           autoStartOnIntensity,
         },
@@ -119,8 +126,23 @@ export function useSmithNote() {
           ...(current.restTimerSettings ?? {
             autoStartOnIntensity: true,
             defaultSeconds: defaultRestTimerSeconds,
+            alertVolume: defaultRestTimerAlertVolume,
           }),
           defaultSeconds: seconds,
+        },
+      }));
+    },
+    [core],
+  );
+
+  const setRestTimerAlertVolume = useCallback(
+    (alertVolume: number) => {
+      const volume = Math.max(0, Math.min(100, Math.round(Number(alertVolume))));
+      core.saveState((current) => ({
+        ...current,
+        restTimerSettings: {
+          ...current.restTimerSettings,
+          alertVolume: volume,
         },
       }));
     },
@@ -365,6 +387,7 @@ export function useSmithNote() {
       setWeightUnit,
       setThemeMode,
       setRestTimerAutoStart,
+      setRestTimerAlertVolume,
       setRestTimerDefaultSeconds,
       setWorkoutReminderEnabled,
       sendWorkoutReminderTestNotification,
@@ -411,6 +434,7 @@ export function useSmithNote() {
       savePresetDraft,
       sendWorkoutReminderTestNotification,
       setRestTimerAutoStart,
+      setRestTimerAlertVolume,
       setRestTimerDefaultSeconds,
       setThemeMode,
       setWeightUnit,

@@ -293,6 +293,7 @@ type WeightUnit = 'kg' | 'lbs';
 type RestTimerSettings = {
   autoStartOnIntensity: boolean;
   defaultSeconds: number;
+  alertVolume: number;
 };
 
 type ExerciseGoal = {
@@ -578,7 +579,7 @@ flowchart TD
 - `weightUnit`: `'kg'`。
 - `themeMode`: `'dark'`。
 - `notificationSettings`: `{ enabled: false }`。
-- `restTimerSettings`: `{ autoStartOnIntensity: true, defaultSeconds: 60 }`。
+- `restTimerSettings`: `{ autoStartOnIntensity: true, defaultSeconds: 60, alertVolume: 100 }`。
 - `schemaVersion`: 現在の保存データバージョン。
 - `updatedAt`: 保存競合判定用の更新日時。
 - `hiddenParts`: 空配列。
@@ -608,7 +609,7 @@ flowchart TD
   - `weightUnit`: `'lbs'` のみ lbs として採用し、それ以外・未設定は `'kg'` に丸める。
   - `themeMode`: `'light'` のみライトモードとして採用し、それ以外・未設定は `'dark'` に丸める。
   - `notificationSettings`: `enabled: true` のみ通知オンとして採用し、未設定・不正値は通知オフに丸める。
-  - `restTimerSettings`: `autoStartOnIntensity: false` のみ自動開始オフとして採用し、未設定・不正値は自動開始オンに丸める。`defaultSeconds` は 1〜999 秒に丸め、未設定・不正値は 60 秒にする。
+  - `restTimerSettings`: `autoStartOnIntensity: false` のみ自動開始オフとして採用し、未設定・不正値は自動開始オンに丸める。`defaultSeconds` は 1〜999 秒に丸め、未設定・不正値は 60 秒にする。`alertVolume` は 0〜100 に丸め、未設定・不正値は 100 にする。
 - **初期状態の `parts`**: スターター種目の部位（胸 / 背中 / 脚 / 肩 / 腕 / 腹筋）をその順序で生成し、パレット色を循環で割り当てる。
 - `schemaVersion`: 読み込み時は正の整数を migration 判定に使い、正規化後は現在の保存データバージョンへ更新する。
 
@@ -1088,14 +1089,14 @@ weight === 0 または reps === 0 → '0.0'
 ### 8.5 レストタイマー（`RestTimer`）
 
 - 既定は `restTimerSettings.defaultSeconds`（初期値 60 秒）。待機中の秒数ボタンをタップすると設定ダイアログを表示する。
-- 設定ダイアログでは、デフォルト秒数を 30 / 60 / 90 / 120 秒のボタンまたは自由入力で変更できる。秒数は 1〜999 にクランプする。同じダイアログで、強度入力時にレストタイマーを自動開始するかを ON / OFF で切り替え、保存時に `state.restTimerSettings` へ反映する。
+- 設定ダイアログでは、デフォルト秒数を 30 / 60 / 90 / 120 秒のボタンまたは自由入力で変更できる。秒数は 1〜999 にクランプする。同じダイアログで、強度入力時にレストタイマーを自動開始するかを ON / OFF で切り替え、アラート音量を 0〜100%（5%刻み）で調節し、保存時に `state.restTimerSettings` へ反映する。
 - START で終了時刻（`Date.now() + 秒`）を保持し、250ms ごとに残り秒を再計算（時刻ベースなのでタブが非アクティブでもズレにくい）。
 - ネイティブ版では START 時に通知権限を確認し、終了時刻へ音付きローカル通知（ID `3003`）を予約する。OSが通知を配信するため、端末ロック・アプリのバックグラウンド化・プロセス停止中でも通知設定の範囲内で音を鳴らす。STOP・再スタート・前面での完了時は予約をキャンセルし、前面では Web Audio、バックグラウンドでは通知音を使って二重再生を避ける。
 - Web Audio の再生はタイマーごとの実行IDで保護し、`AudioContext.resume()` や音源デコードの待機中に再スタート・停止された古いアラートを再生しない。再スタート時は再生中の旧ノードも停止する。
 - `restTimerSettings.autoStartOnIntensity` がオンの場合、詳細画面で強度アイコンを未選択から選択状態へ切り替えたときだけ現在の秒数で自動開始する。選択済みアイコンの再タップで未選択に戻すときは開始しない。実行中の場合は同じ秒数で再スタートする。
 - `RestTimer` は画面遷移レイヤーの外側で常時マウントし、待機中UIと設定ダイアログは未終了の種目詳細画面だけに表示する。開始後は画面を移動しても終了時刻と表示を維持する。
 - 実行中は全画面の左下に、水色の「REST」ラベル・残り秒・進捗バー・STOPボタンを持つミニバーを表示する。背景オーバーレイは表示せず、タイマー以外の画面操作を遮らない。右下FABと重ならない幅に収め、Safe Areaを反映する。
-- 前面で 0 になると停止し、`AudioContext` で `public/Clock-Alarm.wav` を再生する。START 時に `AudioContext` を resume して音源を先読みし、モバイルの自動再生制限に対応。iOS通知用にも同じ `Clock-Alarm.wav` をアプリ本体のリソースへ同梱する。
+- 前面で 0 になると停止し、`AudioContext` で `public/Clock-Alarm.wav` を設定音量で再生する。START 時に `AudioContext` を resume して音源を先読みし、モバイルの自動再生制限に対応。iOS通知用にも同じ `Clock-Alarm.wav` をアプリ本体のリソースへ同梱する。バックグラウンド時のローカル通知音量はOSの端末音量に従う。
 - 実行中は STOP で中断する。停止時はミニバーをフェードアウトし、種目詳細画面では待機中表示へ戻り、それ以外の画面では非表示にする。
 
 ### 8.6 強度（intensity）

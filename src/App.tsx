@@ -302,9 +302,11 @@ function AppShell() {
         <RestTimer
           defaultSeconds={state.restTimerSettings.defaultSeconds}
           autoStartOnIntensity={state.restTimerSettings.autoStartOnIntensity}
+          alertVolume={state.restTimerSettings.alertVolume}
           showIdle={showRestTimerIdle}
           onChangeDefaultSeconds={actions.setRestTimerDefaultSeconds}
           onChangeAutoStart={actions.setRestTimerAutoStart}
+          onChangeAlertVolume={actions.setRestTimerAlertVolume}
         />
       )}
       {drawerOverlayVisible && (
