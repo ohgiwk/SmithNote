@@ -67,7 +67,9 @@ users/{uid}
 
 ## GitHub Pages
 
-`.github/workflows/deploy-pages.yml` の Build step で Firebase 用の `VITE_` 環境変数を渡す。Repository secrets に同名の値を設定する。
+`.github/workflows/deploy-pages.yml` の Build step で Firebase 用の `VITE_` 環境変数を渡す。Repository secrets に必須4項目と同名の値を設定する。設定変更後はワークフローを再実行してビルドし直す。
+
+Firebase Authenticationでは利用する認証プロバイダーを有効にし、承認済みドメインに `ohgiwk.github.io`（パスなし）を追加する。設定値はFirebaseのWebアプリ用を使用する。
 
 ## GoogleログインのiOS設定
 

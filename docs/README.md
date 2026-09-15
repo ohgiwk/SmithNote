@@ -124,9 +124,9 @@ npm run preview -- --host 127.0.0.1 --port 5174
 
 ### 公開版の設定・制限
 
-- 2026年9月15日の同時公開時点では、公開版の Firebase は未設定です。初回画面で「あとで」を選ぶと、ログインせずに記録できます。ログイン・クラウドバックアップは利用できません。
+- 公開ビルドには Repository secrets の `VITE_FIREBASE_API_KEY`、`VITE_FIREBASE_AUTH_DOMAIN`、`VITE_FIREBASE_PROJECT_ID`、`VITE_FIREBASE_APP_ID` を渡します。4項目が揃うとログイン・クラウドバックアップを利用できます。Firebase側でも認証プロバイダー・承認済みドメイン・Firestoreルールの設定が必要です。初回画面の「あとで」から未ログインでも記録できます。
 - 記録は利用中のブラウザの `localStorage` に保存されます。iOS アプリや別のブラウザとは自動共有されません。
-- 現在のワークフローでビルドに渡す GitHub Actions Variables は `VITE_APP_STORE_URL`、`VITE_CONTACT_EMAIL`、`VITE_CANONICAL_URL` です。Firebase を有効にする際は、[Firebase 運用メモ](./firebase-backup.md) に従って公開ビルド側の設定も追加します。
+- 現在のワークフローでビルドに渡す GitHub Actions Variables は `VITE_APP_STORE_URL`、`VITE_CONTACT_EMAIL`、`VITE_CANONICAL_URL` です。Firebase の設定手順は [Firebase 運用メモ](./firebase-backup.md) を参照してください。Secrets を変更した場合は再デプロイが必要です。
 
 ## iOS アプリ化
 
