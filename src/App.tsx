@@ -65,6 +65,7 @@ function AppShell() {
   const appRef = useRef<HTMLElement>(null);
   const [fabFaded, setFabFaded] = useState(false);
   const [partAddDialogOpen, setPartAddDialogOpen] = useState(false);
+  const [cloudRestoring, setCloudRestoring] = useState(false);
   const [homeOverlayState, setHomeOverlayState] = useState<HomeCalendarOverlayState>({
     calendarBackdropState: 'closed',
     drawerState: 'closed',
@@ -359,11 +360,16 @@ function AppShell() {
                 ? 'この端末にはローカルデータがありません。クラウドに保存されているデータを復元できます。'
                 : 'クラウドに既存のバックアップがあります。自動バックアップを始める前に、使用するデータを選んでください。'}
             </p>
+            {cloudRestoring && (
+              <p role="status">
+                クラウドデータを復元しています。通信状況によって時間がかかる場合があります。
+              </p>
+            )}
             <div className="confirm-actions cloud-conflict-actions">
               <button
                 className="small-outline"
                 type="button"
-                disabled={cloud.loading}
+                disabled={cloud.loading || cloudRestoring}
                 onClick={() => void cloud.resolveConflict('device')}
               >
                 {cloud.conflictKind === 'restore' ? '復元しない' : 'この端末を優先'}
@@ -371,10 +377,19 @@ function AppShell() {
               <button
                 className={cloud.conflictKind === 'restore' ? 'danger-button' : 'primary-button'}
                 type="button"
-                disabled={cloud.loading}
-                onClick={() => void cloud.resolveConflict('cloud')}
+                disabled={cloud.loading || cloudRestoring}
+                onClick={() => {
+                  setCloudRestoring(true);
+                  void cloud.resolveConflict('cloud').finally(() => {
+                    setCloudRestoring(false);
+                  });
+                }}
               >
-                {cloud.conflictKind === 'restore' ? '復元する' : 'クラウドから復元'}
+                {cloudRestoring
+                  ? '復元中…'
+                  : cloud.conflictKind === 'restore'
+                    ? '復元する'
+                    : 'クラウドから復元'}
               </button>
             </div>
           </div>
