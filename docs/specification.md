@@ -24,11 +24,11 @@
 ## 1. プロジェクト概要
 
 - **SmithNote** は React + Vite + TypeScript で作られた筋トレ記録モバイルアプリです。
-- アプリ本体はCapacitorを使ってiOS向けにビルドし、Webでは公開しません。
+- アプリ本体はCapacitorを使ってiOS向けにビルドし、GitHub Pagesでも公開します。
 - 通常の記録データは端末の `localStorage` に保存され、未ログインでもローカル完結で利用できます。
 - Firebase設定がある環境では、希望するユーザーだけメールアドレス・パスワードでログインし、手動クラウドバックアップ/復元を利用できます。
 - モバイル優先のレイアウトで、起動直後から記録を始められます。
-- GitHub Pagesでは `/SmithNote/` にランディングページ、`#/privacy` と `#/terms` に公開文書を配信します。
+- GitHub Pagesでは `/FitLog/` にランディングページ、`#/privacy` と `#/terms` に公開文書を配信します。
 
 ### 1.1 設計思想
 
@@ -47,7 +47,7 @@
 | ルーティング | React Router（Declarative Mode / `HashRouter`） |
 | ビルド | Vite |
 | 言語 | TypeScript |
-| Web公開 | React製ランディングページ（GitHub Pages） |
+| Web公開 | ランディングページとアプリ本体（GitHub Pages） |
 | ネイティブアプリ | Capacitor iOS |
 | クラウドバックアップ | Firebase Authentication / Cloud Firestore |
 | アイコン | `@tabler/icons-react` |
@@ -59,7 +59,7 @@
 ```bash
 npm run dev          # 開発サーバー
 npm run dev:app      # モバイルアプリ本体の開発サーバー
-npm run build        # GitHub Pages用ランディングページ生成
+npm run build        # GitHub Pages用ランディングページとアプリ本体の生成
 npm run build:ios    # Capacitor/iOS 向け Web アセット生成
 npm run cap:sync:ios # build:ios 後に iOS プロジェクトへ同期
 npm run cap:open:ios # Xcode で ios プロジェクトを開く
@@ -72,17 +72,19 @@ npm run lint         # eslint
 npm run format       # prettier --write
 ```
 
-- `npm run build` は型チェック後、GitHub Pages用ランディングページを生成します。アプリ本体やService Workerは含みません。
+- `npm run build` は型チェック後、GitHub Pages用ランディングページとアプリ本体を生成します。Service Workerは含みません。
 - `npm run build:ios` は `vite build --mode capacitor` を実行し、Capacitor の WebView で読み込める相対パスの Web アセットを生成します。
 - `npm run cap:sync:ios` は `build:ios` の後に `cap sync ios` で `dist/` を `ios/` プロジェクトへ同期します。
+
+GitHub Pagesのトップ `/FitLog/` はランディングページ、`/FitLog/app/` はアプリ本体です。「アプリを使う」から記録画面を開けます。両方を1回のビルド・デプロイで更新します。
 
 ### 2.2 ビルド設定（`vite.config.ts`）
 
 | 区分 | 設定 | 内容 |
 | --- | --- | --- |
-| 通常ビルド | `base: '/SmithNote/'` | LPエントリを使い、GitHub Pagesの公開パスへ合わせる |
+| 通常ビルド | `base: '/FitLog/'` | LPと `app/index.html` の2つのエントリを生成する |
 | Capacitor ビルド | `mode: 'capacitor'` / `base: './'` | アプリ本体エントリを使い、WebView向け相対パスにする |
-| エントリ分岐 | `__CAPACITOR_BUILD__` | 通常時はLP、Capacitor modeではモバイルアプリだけをバンドルする |
+| エントリ分岐 | `import.meta.env.MODE` | 通常時はLPと `/app/` のアプリ本体、Capacitor modeではアプリ本体だけをバンドルする |
 | LP設定 | `src/landing/config.ts` | App Store URL、問い合わせ先、canonical URL、文書更新日を集約する |
 | LP公開文書 | `#/privacy` / `#/terms` | プライバシーポリシーと利用規約をハッシュルートで公開する |
 | アイコン | `favicon.png` / `apple-touch-icon.png` / `AppIcon-512@2x.png` | `public/image.png` を元画像として使う |

@@ -5,7 +5,12 @@ export default defineConfig(({ mode }) => {
   const isCapacitorBuild = mode === 'capacitor';
 
   return {
-    base: isCapacitorBuild ? './' : '/SmithNote/',
+    base: isCapacitorBuild ? './' : '/FitLog/',
     plugins: [react()],
+    build: {
+      rollupOptions: {
+        input: isCapacitorBuild ? 'index.html' : ['index.html', 'app/index.html'],
+      },
+    },
   };
 });

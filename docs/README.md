@@ -5,11 +5,11 @@ SmithNote の仕様・設計ドキュメントの入口です。
 ## SmithNote とは
 
 - React + Vite + TypeScript で作られた筋トレ記録モバイルアプリです。
-- アプリ本体は Capacitor で iOS 向けにビルドし、Webでは配信しません。
+- アプリ本体は Capacitor で iOS 向けにビルドし、GitHub Pagesでも公開します。
 - 通常の記録データは端末の `localStorage` に保存され、未ログインでもローカル完結で使えます。
 - Firebase設定がある環境では、希望するユーザーだけメールアドレス・パスワードでログインし、手動クラウドバックアップ/復元を利用できます。
 - モバイル優先で、起動直後から選択日のトレーニングを記録できます。
-- GitHub Pagesではランディングページ、プライバシーポリシー、利用規約を `/SmithNote/` で公開します。`main` への push でデプロイが自動実行されます。
+- GitHub Pagesではランディングページ、プライバシーポリシー、利用規約を `/FitLog/` で公開します。`main` への push でデプロイが自動実行されます。
 
 ## ドキュメント一覧
 
@@ -80,7 +80,7 @@ useSmithNoteCore (state + 永続化 + トースト)
 ```bash
 npm run dev          # 開発サーバー
 npm run dev:app      # モバイルアプリ本体の開発サーバー
-npm run build        # ランディングページ生成
+npm run build        # ランディングページとアプリ本体の生成
 npm run build:ios    # Capacitor/iOS 向けの Web アセット生成
 npm run cap:sync:ios # build:ios 後に iOS プロジェクトへ同期
 npm run cap:open:ios # Xcode で ios プロジェクトを開く
@@ -100,4 +100,6 @@ npm run cap:sync:ios
 npm run cap:open:ios
 ```
 
-`npm run build` は GitHub Pages 用に `/SmithNote/` をbaseとするランディングページを生成します。iOSへ同期する場合は `npm run cap:sync:ios` を使い、モバイルアプリ本体を相対パスで生成してCapacitorへ同期します。
+`npm run build` は GitHub Pages 用に `/FitLog/` をbaseとするランディングページとアプリ本体を生成します。iOSへ同期する場合は `npm run cap:sync:ios` を使い、モバイルアプリ本体を相対パスで生成してCapacitorへ同期します。
+
+GitHub Pagesのトップ `/FitLog/` はランディングページ、`/FitLog/app/` はアプリ本体です。「アプリを使う」から記録画面を開けます。両方を1回のビルド・デプロイで更新します。

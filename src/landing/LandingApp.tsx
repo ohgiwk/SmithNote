@@ -22,6 +22,10 @@ function Brand() {
 function StoreButtons({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`store-buttons${compact ? ' store-buttons--compact' : ''}`}>
+      <a className="store-button store-button--primary" href={`${import.meta.env.BASE_URL}app/`}>
+        <small>ブラウザですぐに使う</small>
+        <strong>アプリを使う</strong>
+      </a>
       {landingConfig.appStoreUrl ? (
         <a className="store-button store-button--primary" href={landingConfig.appStoreUrl}>
           <small>Download on the</small>
@@ -84,7 +88,7 @@ function LandingPage() {
         <nav aria-label="メインナビゲーション">
           <a href="#features">できること</a>
           <a href="#screens">画面</a>
-          <a className="header-cta" href="#download">アプリを入手</a>
+          <a className="header-cta" href={`${import.meta.env.BASE_URL}app/`}>アプリを使う</a>
         </nav>
       </header>
       <main>
