@@ -87,28 +87,6 @@ export function PresetEditScreen() {
                   onChange={(event) => onUpdate({ name: event.target.value })}
                 />
               </header>
-              <div className="preset-color-editor" role="group" aria-label="メニューの色">
-                <div className="preset-section-title">メニューの色</div>
-                <div className="preset-color-options">
-                  {presetColors.map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      aria-label={color.label}
-                      aria-pressed={presetColor(preset.color) === color.value}
-                      style={{ backgroundColor: color.value }}
-                      onClick={() => onUpdate({ color: color.value })}
-                    >
-                      {presetColor(preset.color) === color.value ? '✓' : ''}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <PresetScheduleEditor
-                fallbackStartDate={selectedDate}
-                schedule={preset.schedule}
-                onChange={(schedule) => onUpdate({ schedule })}
-              />
             </section>
             <section className="preset-card">
               <div className="preset-section-heading">
@@ -167,6 +145,32 @@ export function PresetEditScreen() {
                     </div>
                   </div>
                 )}
+              </div>
+            </section>
+            <section className="preset-card">
+              <PresetScheduleEditor
+                fallbackStartDate={selectedDate}
+                schedule={preset.schedule}
+                onChange={(schedule) => onUpdate({ schedule })}
+              />
+            </section>
+            <section className="preset-card">
+              <div className="preset-color-editor" role="group" aria-label="メニューの色">
+                <div className="preset-section-title">メニューの色</div>
+                <div className="preset-color-options">
+                  {presetColors.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      aria-label={color.label}
+                      aria-pressed={presetColor(preset.color) === color.value}
+                      style={{ backgroundColor: color.value }}
+                      onClick={() => onUpdate({ color: color.value })}
+                    >
+                      {presetColor(preset.color) === color.value ? '✓' : ''}
+                    </button>
+                  ))}
+                </div>
               </div>
             </section>
           </div>
