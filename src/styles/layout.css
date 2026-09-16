@@ -257,3 +257,31 @@
   color: var(--disabled-text);
   cursor: default;
 }
+.app-update-notice {
+  position: fixed;
+  z-index: 40;
+  bottom: calc(var(--safe-area-bottom) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: min(calc(100% - 24px), 456px);
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--elevation-floating-control);
+}
+
+.app-update-notice p {
+  margin: 0 0 12px;
+}
+
+.app-update-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.app-update-notice button {
+  min-height: 44px;
+}

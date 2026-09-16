@@ -73,6 +73,8 @@ npm run format       # prettier --write
 ```
 
 - `npm run build` は型チェック後、GitHub Pages用ランディングページとアプリ本体を生成します。Service Workerは含みません。
+  - ビルドごとの識別子をアプリと `app-version.json` に埋め込む。公開PWA（スタンドアロン表示）は起動時・表示復帰時・オンライン復帰時・表示中の5分ごとにキャッシュを使わず確認し、異なる版ならアプリ内に更新通知を表示する。開発サーバーとCapacitor版では確認しない。
+  - 「更新する」でページを再読み込みする。編集内容を保存してから更新するよう案内し、自動再読み込みはしない。「あとで」は同じ版の通知を起動中抑制する。通信失敗・不正な応答は通知せず次回に再試行し、通信は10秒で打ち切る。
 - `npm run build:ios` は `vite build --mode capacitor` を実行し、Capacitor の WebView で読み込める相対パスの Web アセットを生成します。
 - `npm run cap:sync:ios` は `build:ios` の後に `cap sync ios` で `dist/` を `ios/` プロジェクトへ同期します。
 

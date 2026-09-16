@@ -24,6 +24,7 @@ import { AnalysisScreen } from './screens/AnalysisScreen';
 import { TrainingMenuScreen } from './screens/TrainingMenuScreen';
 import { PlusIcon } from './icons';
 import { RestTimer } from './components/RestTimer';
+import { AppUpdateNotice } from './components/AppUpdateNotice';
 import type { Screen } from './types';
 import { screenPaths } from './routes';
 import { completeAuthIntro, hasCompletedAuthIntro } from './authState';
@@ -304,6 +305,7 @@ function AppShell() {
           </div>
         </div>
       </main>
+      <AppUpdateNotice />
 
       {screen !== 'auth' && (
         <RestTimer
