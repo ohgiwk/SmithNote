@@ -3,7 +3,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { CalendarIcon, EditIcon, TrashIcon } from '../icons';
 import { useSmithNoteContext } from '../hooks/useSmithNoteContext';
 import { Preset } from '../types';
-import { weekdayLabels } from '../utils';
+import { presetColor, weekdayLabels } from '../utils';
 
 /**
  * トレーニングメニュー画面が必要とする state・操作を Context から組み立てる
@@ -51,7 +51,11 @@ export function TrainingMenuScreen() {
           ) : (
             <div className="schedule-list">
               {presets.map((preset) => (
-                <div className="preset-plan-row" key={preset.id}>
+                <div
+                  className="preset-plan-row"
+                  key={preset.id}
+                  style={{ borderLeftColor: presetColor(preset.color) }}
+                >
                   <button
                     className="preset-plan-main"
                     type="button"

@@ -320,3 +320,21 @@ export function uid() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
+
+export const presetColors = [
+  { value: '#c43d3d', label: '赤' },
+  { value: '#b85c19', label: 'オレンジ' },
+  { value: '#927000', label: '黄' },
+  { value: '#27804b', label: '緑' },
+  { value: '#087e8b', label: '青緑' },
+  { value: '#326bc4', label: '青' },
+  { value: '#8154bb', label: '紫' },
+  { value: '#b83e80', label: 'ピンク' },
+];
+
+/**
+ * 保存データの色を検証し、未設定や不正な値には既定の赤を使う
+ */
+export function presetColor(value: unknown): string {
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : presetColors[0].value;
+}

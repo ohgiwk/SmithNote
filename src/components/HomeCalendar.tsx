@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnalysisIcon, CalendarIcon, MenuIcon, SettingsIcon, TrophyIcon } from '../icons';
 import { useHomeCalendar } from '../hooks/useHomeCalendar';
-import { localDate, weekdayLabels } from '../utils';
-import { Workout } from '../types';
+import { localDate, presetColor, weekdayLabels } from '../utils';
+import { Preset, Workout } from '../types';
 import { useSmithNoteContext } from '../hooks/useSmithNoteContext';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -12,6 +12,7 @@ type CloudActions = ReturnType<typeof useSmithNoteContext>['actions']['cloud'];
 type HomeCalendarProps = {
   selectedDate: string;
   workouts: Workout[];
+  presets: Preset[];
   onSelectDate: (date: string) => void;
   onOpenTrainingMenu: () => void;
   onOpenAnalysis: () => void;
@@ -30,6 +31,7 @@ export type HomeCalendarOverlayState = {
 export function HomeCalendar({
   selectedDate,
   workouts,
+  presets,
   onSelectDate,
   onOpenTrainingMenu,
   onOpenAnalysis,
@@ -45,6 +47,17 @@ export function HomeCalendar({
   const pendingDrawerActionRef = useRef<(() => void) | null>(null);
   const calendar = useHomeCalendar(selectedDate, onSelectDate);
   const trainedDates = useMemo(() => new Set(workouts.map((workout) => workout.date)), [workouts]);
+  const trainedColors = useMemo(() => {
+    const colors = new Map<string, string>();
+    for (const workout of workouts) {
+      if (!workout.presetId || colors.has(workout.date)) continue;
+      colors.set(
+        workout.date,
+        presetColor(presets.find((preset) => preset.id === workout.presetId)?.color),
+      );
+    }
+    return colors;
+  }, [workouts, presets]);
   const today = localDate(new Date());
   const drawerVisible = drawerState !== 'closed';
   const backdropVisible = backdropState !== 'closed';
@@ -283,6 +296,12 @@ export function HomeCalendar({
                                   isToday ? 'today' : ''
                                 } ${selected ? 'selected' : ''}`}
                                 type="button"
+                                style={
+                                  {
+                                    '--training-color':
+                                      trainedColors.get(cell.date) ?? 'var(--red)',
+                                  } as CSSProperties
+                                }
                                 onClick={() => calendar.selectDate(cell.date)}
                               >
                                 {cell.day}

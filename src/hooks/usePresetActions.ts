@@ -5,7 +5,7 @@ import {
   findCurrentPreset,
   scheduledPresetsForDate,
 } from '../selectors/smithNoteSelectors';
-import { formatTimeOfDay } from '../utils';
+import { formatTimeOfDay, presetColor } from '../utils';
 
 type PresetActionsDeps = {
   state: State;
@@ -59,6 +59,7 @@ export function usePresetActions({
   function normalizePreset(preset: Preset): Preset {
     return {
       ...preset,
+      color: presetColor(preset.color),
       name: preset.name.trim() || '名称未設定',
       exerciseIds: [...new Set(preset.exerciseIds)],
       schedule: preset.schedule
@@ -167,7 +168,10 @@ export function usePresetActions({
       showPresetStartError(preset.exerciseIds, todayExerciseIds);
       return;
     }
-    const newWorkouts = exercisesToAdd.map((exercise) => createWorkout(exercise, selectedDate));
+    const newWorkouts = exercisesToAdd.map((exercise) => ({
+      ...createWorkout(exercise, selectedDate),
+      presetId: preset.id,
+    }));
     const startTime = formatTimeOfDay(new Date());
     saveState((prev) => {
       return {
@@ -189,13 +193,18 @@ export function usePresetActions({
     if (!normalizedPreset.exerciseIds.length)
       return showToast('プリセットに種目を追加してください');
 
-    const { todayExerciseIds, exercisesToAdd } = collectPresetExercises(normalizedPreset.exerciseIds);
+    const { todayExerciseIds, exercisesToAdd } = collectPresetExercises(
+      normalizedPreset.exerciseIds,
+    );
     if (!exercisesToAdd.length) {
       showPresetStartError(normalizedPreset.exerciseIds, todayExerciseIds);
       return;
     }
 
-    const newWorkouts = exercisesToAdd.map((exercise) => createWorkout(exercise, selectedDate));
+    const newWorkouts = exercisesToAdd.map((exercise) => ({
+      ...createWorkout(exercise, selectedDate),
+      presetId: normalizedPreset.id,
+    }));
     const startTime = formatTimeOfDay(new Date());
     saveState((prev) => {
       return {

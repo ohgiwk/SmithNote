@@ -1073,8 +1073,9 @@
   color: var(--red);
 }
 
-.home-calendar-grid .day-btn.trained:not(.selected):not(.today) {
-  background: var(--red);
+.home-calendar-grid .day-btn.trained,
+.home-calendar-grid .day-btn.trained.today.selected {
+  background: var(--training-color, var(--red));
   color: var(--text-on-primary);
 }
 
@@ -1092,4 +1093,9 @@
   border-radius: 999px;
   background: var(--text-muted-light);
   content: '';
+}
+
+.home-calendar-grid .day-btn.trained.selected {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }

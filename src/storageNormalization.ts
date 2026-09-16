@@ -1,3 +1,4 @@
+import { presetColor } from './utils';
 import { defaultPartColor, paletteColorAt } from './data/partColors';
 import { starterCatalogVersion, starterExercises } from './data/starterExercises';
 import {
@@ -376,6 +377,7 @@ function normalizePresets(value: unknown): Preset[] {
       exerciseIds: Array.isArray(item.exerciseIds)
         ? item.exerciseIds.filter((id): id is string => typeof id === 'string')
         : [],
+      color: presetColor(item.color),
       schedule: normalizePresetSchedule(item.schedule),
     };
   });
@@ -556,6 +558,7 @@ function normalizeWorkouts(value: unknown): State['workouts'] {
       {
         id: item.id,
         exerciseId: item.exerciseId,
+        presetId: typeof item.presetId === 'string' ? item.presetId : undefined,
         date: item.date,
         name: item.name,
         part: item.part,

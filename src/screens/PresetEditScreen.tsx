@@ -5,7 +5,7 @@ import { useFlatReorder } from '../hooks/useFlatReorder';
 import { DragHandle, PlusIcon, TrashIcon } from '../icons';
 import { useSmithNoteContext } from '../hooks/useSmithNoteContext';
 import { PresetSchedule, TrainingPlanMode } from '../types';
-import { parseDate, weekdayLabels } from '../utils';
+import { parseDate, presetColor, presetColors, weekdayLabels } from '../utils';
 
 /**
  * プリセット編集画面が必要とする state・操作を Context から組み立てる view-model フック
@@ -87,6 +87,23 @@ export function PresetEditScreen() {
                   onChange={(event) => onUpdate({ name: event.target.value })}
                 />
               </header>
+              <div className="preset-color-editor" role="group" aria-label="メニューの色">
+                <div className="preset-section-title">メニューの色</div>
+                <div className="preset-color-options">
+                  {presetColors.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      aria-label={color.label}
+                      aria-pressed={presetColor(preset.color) === color.value}
+                      style={{ backgroundColor: color.value }}
+                      onClick={() => onUpdate({ color: color.value })}
+                    >
+                      {presetColor(preset.color) === color.value ? '✓' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <PresetScheduleEditor
                 fallbackStartDate={selectedDate}
                 schedule={preset.schedule}

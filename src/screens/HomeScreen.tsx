@@ -687,6 +687,7 @@ export function HomeScreen({ onOverlayStateChange }: HomeScreenProps) {
       <HomeCalendar
         selectedDate={selectedDate}
         workouts={workouts}
+        presets={presets}
         onSelectDate={selectDateWithFade}
         onOpenTrainingMenu={onOpenTrainingMenu}
         onOpenAnalysis={onOpenAnalysis}

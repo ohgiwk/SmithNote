@@ -96,6 +96,7 @@ export type WorkoutSet = {
 };
 
 export type Workout = {
+  presetId?: string;
   id: string;
   exerciseId: string;
   date: string;
@@ -111,6 +112,7 @@ export type Workout = {
 };
 
 export type Preset = {
+  color?: string;
   id: string;
   name: string;
   exerciseIds: string[];
