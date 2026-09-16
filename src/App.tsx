@@ -113,6 +113,12 @@ function AppShell() {
 
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = state.themeMode;
+    const headerColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--panel')
+      .trim();
+    if (headerColor) {
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', headerColor);
+    }
   }, [state.themeMode]);
 
   useEffect(() => {

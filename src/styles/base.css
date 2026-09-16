@@ -189,6 +189,18 @@ body {
   color: var(--ink);
 }
 
+/**
+ * iPhone がステータスバーの色を取得するページ背景をヘッダーに揃える。
+ * 画面遷移中も同じ色を維持し、PC の画面外余白は従来の色を使う。
+ */
+@media (max-width: 480px), (display-mode: standalone) {
+  html,
+  body,
+  #root {
+    background: var(--panel);
+  }
+}
+
 button,
 input,
 textarea {
