@@ -359,47 +359,49 @@ function AppShell() {
             aria-labelledby="cloud-conflict-title"
           >
             <div className="confirm-title" id="cloud-conflict-title">
-              {cloud.conflictKind === 'restore'
-                ? 'クラウドから復元しますか？'
-                : '使用する記録を選択'}
+              {cloudRestoring
+                ? 'クラウドから復元中…'
+                : cloud.conflictKind === 'restore'
+                  ? 'クラウドから復元しますか？'
+                  : '使用する記録を選択'}
             </div>
-            <p>
-              {cloud.conflictKind === 'restore'
-                ? 'この端末にはローカルデータがありません。クラウドに保存されているデータを復元できます。'
-                : 'クラウドに既存のバックアップがあります。自動バックアップを始める前に、使用するデータを選んでください。'}
-            </p>
+            {!cloudRestoring && (
+              <p>
+                {cloud.conflictKind === 'restore'
+                  ? 'この端末にはローカルデータがありません。クラウドに保存されているデータを復元できます。'
+                  : 'クラウドに既存のバックアップがあります。自動バックアップを始める前に、使用するデータを選んでください。'}
+              </p>
+            )}
             {cloudRestoring && (
               <p role="status">
                 クラウドデータを復元しています。通信状況によって時間がかかる場合があります。
               </p>
             )}
-            <div className="confirm-actions cloud-conflict-actions">
-              <button
-                className="small-outline"
-                type="button"
-                disabled={cloud.loading || cloudRestoring}
-                onClick={() => void cloud.resolveConflict('device')}
-              >
-                {cloud.conflictKind === 'restore' ? '復元しない' : 'この端末を優先'}
-              </button>
-              <button
-                className={cloud.conflictKind === 'restore' ? 'danger-button' : 'primary-button'}
-                type="button"
-                disabled={cloud.loading || cloudRestoring}
-                onClick={() => {
-                  setCloudRestoring(true);
-                  void cloud.resolveConflict('cloud').finally(() => {
-                    setCloudRestoring(false);
-                  });
-                }}
-              >
-                {cloudRestoring
-                  ? '復元中…'
-                  : cloud.conflictKind === 'restore'
-                    ? '復元する'
-                    : 'クラウドから復元'}
-              </button>
-            </div>
+            {!cloudRestoring && (
+              <div className="confirm-actions cloud-conflict-actions">
+                <button
+                  className="small-outline"
+                  type="button"
+                  disabled={cloud.loading || cloudRestoring}
+                  onClick={() => void cloud.resolveConflict('device')}
+                >
+                  {cloud.conflictKind === 'restore' ? '復元しない' : 'この端末を優先'}
+                </button>
+                <button
+                  className={cloud.conflictKind === 'restore' ? 'danger-button' : 'primary-button'}
+                  type="button"
+                  disabled={cloud.loading || cloudRestoring}
+                  onClick={() => {
+                    setCloudRestoring(true);
+                    void cloud.resolveConflict('cloud').finally(() => {
+                      setCloudRestoring(false);
+                    });
+                  }}
+                >
+                  {cloud.conflictKind === 'restore' ? '復元する' : 'クラウドから復元'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
