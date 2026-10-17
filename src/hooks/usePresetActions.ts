@@ -169,7 +169,7 @@ export function usePresetActions({
       return;
     }
     const newWorkouts = exercisesToAdd.map((exercise) => ({
-      ...createWorkout(exercise, selectedDate, state.defaultReps),
+      ...createWorkout(exercise, selectedDate, state.defaultReps, state.defaultSetCount),
       presetId: preset.id,
     }));
     const startTime = formatTimeOfDay(new Date());
@@ -202,7 +202,7 @@ export function usePresetActions({
     }
 
     const newWorkouts = exercisesToAdd.map((exercise) => ({
-      ...createWorkout(exercise, selectedDate, state.defaultReps),
+      ...createWorkout(exercise, selectedDate, state.defaultReps, state.defaultSetCount),
       presetId: normalizedPreset.id,
     }));
     const startTime = formatTimeOfDay(new Date());

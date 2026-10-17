@@ -8,7 +8,13 @@ import {
   Workout,
   WorkoutSet,
 } from '../types';
-import { formatTimeOfDay, isUnstartedWorkout, newSet, workoutUsageElapsedSeconds } from '../utils';
+import {
+  formatTimeOfDay,
+  isUnstartedWorkout,
+  newSet,
+  normalizeDefaultSetCount,
+  workoutUsageElapsedSeconds,
+} from '../utils';
 import { createWorkout } from '../selectors/smithNoteSelectors';
 
 type WorkoutActionsDeps = {
@@ -116,7 +122,7 @@ export function useWorkoutActions({
   }
 
   /**
-   * 詳細画面を開く。セットが5つ未満なら空セットを補充する
+   * 詳細画面を開き、設定したデフォルトのセット数まで不足分を補充する
    */
   function openWorkoutDetail(workoutId: string) {
     const target = state.workouts.find((workout) => workout.id === workoutId);
@@ -129,12 +135,13 @@ export function useWorkoutActions({
     saveState((prev) => ({
       ...prev,
       workouts: prev.workouts.map((workout) => {
-        if (workout.id !== workoutId || workout.sets.length >= 5) return workout;
+        const setCount = normalizeDefaultSetCount(prev.defaultSetCount);
+        if (workout.id !== workoutId || workout.sets.length >= setCount) return workout;
         return {
           ...workout,
           sets: [
             ...workout.sets,
-            ...Array.from({ length: 5 - workout.sets.length }, () =>
+            ...Array.from({ length: setCount - workout.sets.length }, () =>
               newSet(workout.measurementType === 'reps' ? prev.defaultReps : null),
             ),
           ],
@@ -156,7 +163,8 @@ export function useWorkoutActions({
     const existing = state.workouts.find(
       (item) => item.date === selectedDate && item.exerciseId === exerciseId,
     );
-    const workout = existing || createWorkout(exercise, selectedDate, state.defaultReps);
+    const workout =
+      existing || createWorkout(exercise, selectedDate, state.defaultReps, state.defaultSetCount);
     saveState((prev) => {
       const hasWorkoutsForDate = prev.workouts.some((item) => item.date === selectedDate);
       const workoutStartTimes =

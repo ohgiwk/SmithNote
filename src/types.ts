@@ -163,6 +163,7 @@ export type State = {
   trainingPlans: TrainingPlan[];
   parts: PartSetting[];
   hiddenParts: string[];
+  defaultSetCount?: number;
   defaultReps?: number | null;
   weightUnit: WeightUnit;
   themeMode: ThemeMode;

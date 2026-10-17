@@ -152,3 +152,30 @@ describe('セット追加時の回数初期値', () => {
     },
   );
 });
+
+describe('デフォルトのセット数までの補充', () => {
+  it.each([1, 3, 7])('設定が%sセットの場合に既存記録を保持して補充する', (count) => {
+    let actions!: WorkoutActions;
+    let latestState!: State;
+    render(
+      <WorkoutActionsProbe
+        initialState={{
+          ...state,
+          defaultSetCount: count,
+          workouts: [
+            { ...workout, sets: [...workout.sets, { id: 's2', weight: null, recordValue: null }] },
+          ],
+        }}
+        onRender={(nextActions, nextState) => {
+          actions = nextActions;
+          latestState = nextState;
+        }}
+      />,
+    );
+    act(() => actions.openWorkoutDetail('w1'));
+    expect(latestState.workouts[0].sets).toHaveLength(Math.max(2, count));
+    expect(latestState.workouts[0].sets[0]).toEqual(workout.sets[0]);
+    act(() => actions.addSet('w1'));
+    expect(latestState.workouts[0].sets).toHaveLength(Math.max(2, count) + 1);
+  });
+});

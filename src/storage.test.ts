@@ -611,3 +611,18 @@ describe('回数の初期値の保存互換性', () => {
     expect(loadState().state.defaultReps).toBe(expected);
   });
 });
+
+describe('デフォルトのセット数の保存互換性', () => {
+  it.each([
+    [undefined, 5],
+    [null, 5],
+    ['3', 5],
+    [3, 3],
+    [0, 1],
+    [30, 20],
+    [3.8, 3],
+  ])('保存値 %s を %s に正規化する', (value, expected) => {
+    localStorage.setItem(storeKey, JSON.stringify({ ...makeValidSaved(), defaultSetCount: value }));
+    expect(loadState().state.defaultSetCount).toBe(expected);
+  });
+});

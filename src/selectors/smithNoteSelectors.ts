@@ -1,6 +1,14 @@
 import { Exercise, PartSetting, Preset, State, Workout } from '../types';
 import { defaultPartColor } from '../data/partColors';
-import { calcRm, isRecordedSet, newSet, number, parseDate, uid } from '../utils';
+import {
+  calcRm,
+  isRecordedSet,
+  newSet,
+  normalizeDefaultSetCount,
+  number,
+  parseDate,
+  uid,
+} from '../utils';
 
 /**
  * トレーニング日などで使う特別な部位。並びや色管理の対象外にする
@@ -501,6 +509,7 @@ export function createWorkout(
   exercise: Exercise,
   date: string,
   defaultReps?: number | null,
+  defaultSetCount?: number,
 ): Workout {
   return {
     id: uid(),
@@ -509,7 +518,7 @@ export function createWorkout(
     name: exercise.name,
     part: exercise.part,
     measurementType: exercise.measurementType,
-    sets: Array.from({ length: 5 }, () =>
+    sets: Array.from({ length: normalizeDefaultSetCount(defaultSetCount) }, () =>
       newSet(exercise.measurementType === 'reps' ? defaultReps : null),
     ),
     note: '',

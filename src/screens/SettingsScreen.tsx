@@ -25,6 +25,8 @@ function useSettingsScreenModel() {
   const { state, actions } = useSmithNoteContext();
 
   return {
+    defaultSetCount: state.defaultSetCount ?? 5,
+    onChangeDefaultSetCount: actions.setDefaultSetCount,
     defaultReps: state.defaultReps ?? null,
     onChangeDefaultReps: actions.setDefaultReps,
     weightUnit: state.weightUnit,
@@ -46,6 +48,8 @@ function useSettingsScreenModel() {
  */
 export function SettingsScreen() {
   const {
+    defaultSetCount,
+    onChangeDefaultSetCount,
     defaultReps,
     onChangeDefaultReps,
     weightUnit,
@@ -111,6 +115,24 @@ export function SettingsScreen() {
           <h2 className="settings-section-title" id="input-settings-title">
             入力設定
           </h2>
+          <label className="settings-row">
+            <div className="settings-label">
+              <span>デフォルトのセット数</span>
+              <strong>種目追加・セット補充に使用</strong>
+            </div>
+            <select
+              className="settings-default-reps"
+              aria-label="デフォルトのセット数"
+              value={defaultSetCount}
+              onChange={(event) => onChangeDefaultSetCount(Number(event.target.value))}
+            >
+              {Array.from({ length: 20 }, (_, index) => index + 1).map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="settings-row">
             <div className="settings-label">
               <span>回数の初期値</span>

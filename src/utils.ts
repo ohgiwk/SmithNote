@@ -142,6 +142,14 @@ export function normalizeDefaultReps(value: unknown): number | null {
   return Math.min(999, Math.floor(value));
 }
 
+/**
+ * セット数の初期値を正規化し、旧データや不正値は従来の５セットへ戻す
+ */
+export function normalizeDefaultSetCount(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 5;
+  return Math.max(1, Math.min(20, Math.floor(value)));
+}
+
 export function newSet(defaultReps?: number | null): WorkoutSet {
   return { id: uid(), weight: null, recordValue: normalizeDefaultReps(defaultReps) };
 }

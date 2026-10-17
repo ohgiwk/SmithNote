@@ -361,3 +361,18 @@ describe('回数の初期値', () => {
     expect(unset.sets.every((set) => set.recordValue === null)).toBe(true);
   });
 });
+
+describe('デフォルトのセット数', () => {
+  it.each([1, 3, 20])('新規種目を設定した%sセットで作成する', (count) => {
+    const exercise = {
+      id: 'e1',
+      name: 'ベンチ',
+      part: '胸',
+      category: 'free' as const,
+      measurementType: 'reps' as const,
+    };
+    const created = createWorkout(exercise, '2026-10-17', 12, count);
+    expect(created.sets).toHaveLength(count);
+    expect(created.sets.every((set) => set.recordValue === 12)).toBe(true);
+  });
+});
