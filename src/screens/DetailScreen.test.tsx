@@ -127,7 +127,7 @@ function detailNumberInputs(container: HTMLElement) {
 }
 
 describe('DetailScreen set inputs', () => {
-  it('表示時に実施時間を開始し、停止・再開・リセットを操作できる', () => {
+  it('計測中の実施時間を表示し、停止・リセットを操作できる', () => {
     const startWorkoutUsage = vi.fn();
     const pauseWorkoutUsage = vi.fn();
     const resetWorkoutUsage = vi.fn();
@@ -143,7 +143,7 @@ describe('DetailScreen set inputs', () => {
       resetWorkoutUsage,
     });
 
-    expect(startWorkoutUsage).toHaveBeenCalledWith('w1');
+    expect(startWorkoutUsage).not.toHaveBeenCalled();
     expect(within(container).getByLabelText('種目実施時間').textContent).toContain('1:02');
     expect(within(container).queryByRole('button', { name: '停止' })).toBeNull();
     fireEvent.click(within(container).getByRole('button', { name: '実施時間タイマーを操作' }));
@@ -154,6 +154,30 @@ describe('DetailScreen set inputs', () => {
 
     unmount();
     expect(pauseWorkoutUsage).toHaveBeenCalledWith('w1');
+  });
+
+  it('表示時は自動開始せず、計測済みの場合は時間・再開・リセットを表示する', () => {
+    const startWorkoutUsage = vi.fn();
+    const first = renderDetailScreen({
+      currentWorkout: { ...workout, usageElapsedSeconds: 0, usageStartedAt: undefined },
+      startWorkoutUsage,
+    });
+    expect(startWorkoutUsage).not.toHaveBeenCalled();
+    fireEvent.click(within(first.container).getByRole('button', { name: '開始' }));
+    expect(startWorkoutUsage).toHaveBeenCalledWith('w1');
+    first.unmount();
+
+    startWorkoutUsage.mockClear();
+    const resumed = renderDetailScreen({
+      currentWorkout: { ...workout, usageElapsedSeconds: 62, usageStartedAt: undefined },
+      startWorkoutUsage,
+    });
+    expect(startWorkoutUsage).not.toHaveBeenCalled();
+    expect(within(resumed.container).getByLabelText('種目実施時間').textContent).toContain('1:02');
+    expect(within(resumed.container).getByRole('button', { name: 'リセット' })).toBeTruthy();
+    expect(resumed.container.querySelector('.workout-usage-start')).toBeNull();
+    fireEvent.click(within(resumed.container).getByRole('button', { name: '再開' }));
+    expect(startWorkoutUsage).toHaveBeenCalledWith('w1');
   });
 
   it('終了済みの詳細では実施時間を表示するだけで自動開始しない', () => {

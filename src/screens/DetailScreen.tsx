@@ -82,7 +82,6 @@ function WorkoutUsageTimer({
 
   useEffect(() => {
     if (!active || readOnly) return undefined;
-    actionRef.current.onStart(workout.id);
     return () => actionRef.current.onPause(workout.id);
   }, [active, readOnly, workout.id]);
 
@@ -101,28 +100,36 @@ function WorkoutUsageTimer({
   const elapsed = workoutUsageElapsedSeconds(workout, now);
   const running = Boolean(workout.usageStartedAt);
 
+  const showActions = expanded || (!readOnly && !running && elapsed > 0);
+
   return (
     <div
-      className={`workout-usage-timer ${expanded ? 'expanded' : ''}`}
+      className={`workout-usage-timer ${showActions ? 'expanded' : ''}`}
       aria-label="種目実施時間"
     >
-      <button
-        className="workout-usage-summary"
-        type="button"
-        aria-expanded={expanded}
-        aria-label={expanded ? '実施時間タイマーを閉じる' : '実施時間タイマーを操作'}
-        onClick={() => setExpanded((current) => !current)}
-      >
-        {expanded && <span>実施時間</span>}
-        <strong aria-live="off">{formatWorkoutUsageTime(elapsed)}</strong>
-      </button>
-      {!readOnly && expanded && (
+      {!readOnly && !running && elapsed === 0 && !showActions ? (
+        <button className="workout-usage-start" type="button" onClick={() => onStart(workout.id)}>
+          開始
+        </button>
+      ) : (
+        <button
+          className="workout-usage-summary"
+          type="button"
+          aria-expanded={showActions}
+          aria-label={showActions ? '実施時間タイマーを閉じる' : '実施時間タイマーを操作'}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {showActions && <span>実施時間</span>}
+          <strong aria-live="off">{formatWorkoutUsageTime(elapsed)}</strong>
+        </button>
+      )}
+      {!readOnly && showActions && (
         <div className="workout-usage-actions">
           <button
             type="button"
             onClick={() => (running ? onPause(workout.id) : onStart(workout.id))}
           >
-            {running ? '停止' : '再開'}
+            {running ? '停止' : elapsed > 0 ? '再開' : '開始'}
           </button>
           <button className="secondary" type="button" onClick={() => onReset(workout.id)}>
             リセット

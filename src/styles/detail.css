@@ -684,6 +684,7 @@
 }
 
 .workout-usage-timer {
+  flex-shrink: 0;
   position: relative;
   z-index: 9;
   display: flex;
@@ -696,6 +697,22 @@
   transition:
     min-height 0.18s ease,
     padding 0.18s ease;
+}
+
+.workout-usage-start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 34px;
+  margin: 5px auto;
+  border-radius: 7px;
+  padding: 0 20px;
+  background: var(--red);
+  color: var(--text-on-primary);
+  font-size: 13px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .workout-usage-timer.expanded {
