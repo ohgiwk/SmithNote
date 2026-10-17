@@ -8,7 +8,7 @@ import {
   PrivacyIcon,
 } from '../icons';
 import { ThemeMode, WeightUnit } from '../types';
-import { weightUnitLabel } from '../utils';
+import { normalizeDefaultReps, weightUnitLabel } from '../utils';
 import { useSmithNoteContext } from '../hooks/useSmithNoteContext';
 import { appVersion } from '../version';
 
@@ -25,6 +25,8 @@ function useSettingsScreenModel() {
   const { state, actions } = useSmithNoteContext();
 
   return {
+    defaultReps: state.defaultReps ?? null,
+    onChangeDefaultReps: actions.setDefaultReps,
     weightUnit: state.weightUnit,
     themeMode: state.themeMode,
     onEditParts: () => actions.setScreen('partEdit'),
@@ -44,6 +46,8 @@ function useSettingsScreenModel() {
  */
 export function SettingsScreen() {
   const {
+    defaultReps,
+    onChangeDefaultReps,
     weightUnit,
     themeMode,
     onEditParts,
@@ -102,6 +106,35 @@ export function SettingsScreen() {
               ))}
             </div>
           </div>
+        </section>
+        <section className="settings-section" aria-labelledby="input-settings-title">
+          <h2 className="settings-section-title" id="input-settings-title">
+            入力設定
+          </h2>
+          <label className="settings-row">
+            <div className="settings-label">
+              <span>回数の初期値</span>
+              <strong>空欄で自動入力なし</strong>
+            </div>
+            <input
+              className="settings-default-reps"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="999"
+              step="1"
+              aria-label="回数の初期値"
+              placeholder="未設定"
+              value={defaultReps ?? ''}
+              onChange={(event) =>
+                onChangeDefaultReps(
+                  normalizeDefaultReps(
+                    event.target.value === '' ? null : Number(event.target.value),
+                  ),
+                )
+              }
+            />
+          </label>
         </section>
         <section className="settings-section" aria-labelledby="master-management-title">
           <h2 className="settings-section-title" id="master-management-title">

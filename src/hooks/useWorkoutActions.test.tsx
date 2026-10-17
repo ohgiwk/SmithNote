@@ -40,10 +40,12 @@ const state: State = {
 
 function WorkoutActionsProbe({
   onRender,
+  initialState = state,
 }: {
   onRender: (actions: WorkoutActions, state: State) => void;
+  initialState?: State;
 }) {
-  const [currentState, setCurrentState] = useState(state);
+  const [currentState, setCurrentState] = useState(initialState);
   const actions = useWorkoutActions({
     state: currentState,
     saveState: (updater) => setCurrentState((draft) => updater(draft)),
@@ -119,4 +121,34 @@ describe('useWorkoutActions workout usage timer', () => {
     view.unmount();
     vi.useRealTimers();
   });
+});
+
+describe('セット追加時の回数初期値', () => {
+  it.each(['reps', 'seconds'] as const)(
+    '既存の%sセットは変更せず新規セットに適用する',
+    (measurementType) => {
+      let actions!: WorkoutActions;
+      let latestState!: State;
+      render(
+        <WorkoutActionsProbe
+          initialState={{ ...state, defaultReps: 12, workouts: [{ ...workout, measurementType }] }}
+          onRender={(nextActions, nextState) => {
+            actions = nextActions;
+            latestState = nextState;
+          }}
+        />,
+      );
+      act(() => actions.openWorkoutDetail('w1'));
+      expect(latestState.workouts[0].sets[0].recordValue).toBe(10);
+      expect(
+        latestState.workouts[0].sets
+          .slice(1)
+          .every((set) => set.recordValue === (measurementType === 'reps' ? 12 : null)),
+      ).toBe(true);
+      act(() => actions.addSet('w1'));
+      expect(latestState.workouts[0].sets[5].recordValue).toBe(
+        measurementType === 'reps' ? 12 : null,
+      );
+    },
+  );
 });

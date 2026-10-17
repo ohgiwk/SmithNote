@@ -370,3 +370,10 @@
   font-weight: 900;
   line-height: 1.4;
 }
+
+.settings-default-reps {
+  width: 88px;
+  min-width: 0;
+  min-height: 44px;
+  text-align: center;
+}

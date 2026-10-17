@@ -595,3 +595,19 @@ describe('getDeviceId', () => {
     expect(localStorage.getItem(deviceIdKey)).toBe(first);
   });
 });
+
+describe('回数の初期値の保存互換性', () => {
+  it.each([
+    [undefined, null],
+    [null, null],
+    [12, 12],
+    [0, null],
+    [-1, null],
+    ['10', null],
+    [12.8, 12],
+    [1000, 999],
+  ])('初期値 %s を %s に正規化する', (value, expected) => {
+    localStorage.setItem(storeKey, JSON.stringify({ ...makeValidSaved(), defaultReps: value }));
+    expect(loadState().state.defaultReps).toBe(expected);
+  });
+});

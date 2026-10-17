@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createWorkout,
   buildExerciseCounts,
   buildExerciseGrowthSeries,
   buildExerciseBestRecords,
@@ -345,5 +346,18 @@ describe('analysis selectors', () => {
       { part: '胸', count: 2 },
       { part: '脚', count: 1 },
     ]);
+  });
+});
+
+describe('回数の初期値', () => {
+  it('回数種目の新規セットだけに適用し、重量と秒数は空欄を維持する', () => {
+    const exercise = { id: 'e1', name: 'ベンチ', part: '胸', category: 'free' as const };
+    const reps = createWorkout({ ...exercise, measurementType: 'reps' }, '2026-10-17', 12);
+    expect(reps.sets).toHaveLength(5);
+    expect(reps.sets.every((set) => set.recordValue === 12 && set.weight === null)).toBe(true);
+    const seconds = createWorkout({ ...exercise, measurementType: 'seconds' }, '2026-10-17', 12);
+    expect(seconds.sets.every((set) => set.recordValue === null)).toBe(true);
+    const unset = createWorkout({ ...exercise, measurementType: 'reps' }, '2026-10-17');
+    expect(unset.sets.every((set) => set.recordValue === null)).toBe(true);
   });
 });

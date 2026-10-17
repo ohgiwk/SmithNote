@@ -497,7 +497,11 @@ export function buildPartRecentLabels(
   return labels;
 }
 
-export function createWorkout(exercise: Exercise, date: string): Workout {
+export function createWorkout(
+  exercise: Exercise,
+  date: string,
+  defaultReps?: number | null,
+): Workout {
   return {
     id: uid(),
     exerciseId: exercise.id,
@@ -505,7 +509,9 @@ export function createWorkout(exercise: Exercise, date: string): Workout {
     name: exercise.name,
     part: exercise.part,
     measurementType: exercise.measurementType,
-    sets: Array.from({ length: 5 }, () => newSet()),
+    sets: Array.from({ length: 5 }, () =>
+      newSet(exercise.measurementType === 'reps' ? defaultReps : null),
+    ),
     note: '',
     usageElapsedSeconds: 0,
   };

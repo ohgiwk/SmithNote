@@ -22,7 +22,7 @@ import {
   WeightUnit,
   WorkoutSet,
 } from './types';
-import { defaultExerciseCategory, uid } from './utils';
+import { defaultExerciseCategory, normalizeDefaultReps, uid } from './utils';
 
 const REST_PART = 'レスト';
 export const stateSchemaVersion = 4;
@@ -76,6 +76,7 @@ export function createDefaultState(): State {
     trainingPlans: [],
     parts: buildPartsFromNames(starterExercises.map((exercise) => exercise.part)),
     hiddenParts: [],
+    defaultReps: null,
     weightUnit: 'kg',
     themeMode: 'dark',
     notificationSettings: { enabled: false },
@@ -212,6 +213,7 @@ export function normalizeState(saved: Partial<State> | null | undefined): State 
       trainingPlans,
     ),
     hiddenParts: normalizeHiddenParts(migrated.hiddenParts),
+    defaultReps: normalizeDefaultReps(migrated.defaultReps),
     weightUnit: normalizeWeightUnit(migrated.weightUnit),
     themeMode: normalizeThemeMode(migrated.themeMode),
     notificationSettings: normalizeNotificationSettings(migrated.notificationSettings),

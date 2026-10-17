@@ -134,7 +134,9 @@ export function useWorkoutActions({
           ...workout,
           sets: [
             ...workout.sets,
-            ...Array.from({ length: 5 - workout.sets.length }, () => newSet()),
+            ...Array.from({ length: 5 - workout.sets.length }, () =>
+              newSet(workout.measurementType === 'reps' ? prev.defaultReps : null),
+            ),
           ],
         };
       }),
@@ -154,7 +156,7 @@ export function useWorkoutActions({
     const existing = state.workouts.find(
       (item) => item.date === selectedDate && item.exerciseId === exerciseId,
     );
-    const workout = existing || createWorkout(exercise, selectedDate);
+    const workout = existing || createWorkout(exercise, selectedDate, state.defaultReps);
     saveState((prev) => {
       const hasWorkoutsForDate = prev.workouts.some((item) => item.date === selectedDate);
       const workoutStartTimes =
@@ -187,7 +189,15 @@ export function useWorkoutActions({
     saveState((prev) => ({
       ...prev,
       workouts: prev.workouts.map((workout) =>
-        workout.id === workoutId ? { ...workout, sets: [...workout.sets, newSet()] } : workout,
+        workout.id === workoutId
+          ? {
+              ...workout,
+              sets: [
+                ...workout.sets,
+                newSet(workout.measurementType === 'reps' ? prev.defaultReps : null),
+              ],
+            }
+          : workout,
       ),
     }));
     setCurrentWorkoutId(workoutId);

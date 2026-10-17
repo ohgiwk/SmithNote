@@ -134,8 +134,16 @@ export function compactCalendarCells(year: number, month: number): CalendarCell[
 
 export const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
 
-export function newSet(): WorkoutSet {
-  return { id: uid(), weight: null, recordValue: null };
+/**
+ * 回数の初期値を正規化し、未設定や不正値は空欄として扱う
+ */
+export function normalizeDefaultReps(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return null;
+  return Math.min(999, Math.floor(value));
+}
+
+export function newSet(defaultReps?: number | null): WorkoutSet {
+  return { id: uid(), weight: null, recordValue: normalizeDefaultReps(defaultReps) };
 }
 
 export const intensityOptions: { value: SetIntensity; label: string }[] = [

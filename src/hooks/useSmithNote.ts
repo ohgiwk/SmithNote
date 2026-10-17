@@ -86,6 +86,13 @@ export function useSmithNote() {
     setCurrentPresetId: presets.setCurrentPresetId,
   });
 
+  const setDefaultReps = useCallback(
+    (defaultReps: number | null) => {
+      core.saveState((current) => ({ ...current, defaultReps }));
+    },
+    [core],
+  );
+
   const setWeightUnit = useCallback(
     (weightUnit: WeightUnit) => {
       core.saveState((current) => ({ ...current, weightUnit }));
@@ -384,6 +391,7 @@ export function useSmithNote() {
       setScreen: nav.showScreen,
       goBack: nav.goBack,
       setEditMode: ui.setEditMode,
+      setDefaultReps,
       setWeightUnit,
       setThemeMode,
       setRestTimerAutoStart,
@@ -437,6 +445,7 @@ export function useSmithNote() {
       setRestTimerAlertVolume,
       setRestTimerDefaultSeconds,
       setThemeMode,
+      setDefaultReps,
       setWeightUnit,
       setWorkoutReminderEnabled,
       togglePresetDraftExercise,
