@@ -1,4 +1,5 @@
 import { MouseEvent, PointerEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { ChevronDown, ChevronUp, HistoryIcon, PlusIcon, TrashIcon, UndoIcon } from '../icons';
 import {
@@ -646,6 +647,7 @@ export function DetailScreen() {
     onPauseWorkoutUsage,
     onResetWorkoutUsage,
   } = useDetailScreenModel();
+  const [copyConfirmationOpen, setCopyConfirmationOpen] = useState(false);
   const [openDeleteSetId, setOpenDeleteSetId] = useState<string | null>(null);
   const [weightInputs, setWeightInputs] = useState<Record<string, string>>({});
   const [recordInputs, setRecordInputs] = useState<Record<string, string>>({});
@@ -696,6 +698,19 @@ export function DetailScreen() {
       return next;
     });
   }
+  function requestCopyPreviousWorkoutSets() {
+    if (!previousWorkout || readOnly) return;
+    const hasInput = currentWorkout.sets.some(
+      (set) =>
+        String(weightInputValue(set.id, set.weight)).trim() !== '' ||
+        String(recordInputValue(set.id, set.recordValue)).trim() !== '',
+    );
+    if (hasInput) {
+      setCopyConfirmationOpen(true);
+      return;
+    }
+    copyPreviousWorkoutSets();
+  }
   function copyPreviousWorkoutSets() {
     if (!previousWorkout || readOnly) return;
     const nextWeightInputs: Record<string, string> = {};
@@ -744,7 +759,7 @@ export function DetailScreen() {
               workout={previousWorkout}
               weightUnit={weightUnit}
               canCopy={!readOnly}
-              onCopy={copyPreviousWorkoutSets}
+              onCopy={requestCopyPreviousWorkoutSets}
             />
           </>
         )}
@@ -907,6 +922,35 @@ export function DetailScreen() {
           </button>
         )}
       </div>
+      {copyConfirmationOpen && (
+        <ConfirmDialog
+          title="前回記録で上書きしますか？"
+          className="copy-previous-workout-dialog"
+          labelledBy="copy-previous-workout-title"
+          onClose={() => setCopyConfirmationOpen(false)}
+        >
+          <p>入力済みの重量・回数（秒数）を前回記録で上書きします。</p>
+          <div className="confirm-actions">
+            <button
+              className="small-outline"
+              type="button"
+              onClick={() => setCopyConfirmationOpen(false)}
+            >
+              キャンセル
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              onClick={() => {
+                setCopyConfirmationOpen(false);
+                copyPreviousWorkoutSets();
+              }}
+            >
+              上書きしてコピー
+            </button>
+          </div>
+        </ConfirmDialog>
+      )}
     </section>
   );
 }

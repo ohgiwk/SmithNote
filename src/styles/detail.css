@@ -1024,3 +1024,16 @@
     opacity: 0;
   }
 }
+
+.copy-previous-workout-dialog .confirm-actions {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 8px;
+}
+
+.copy-previous-workout-dialog .confirm-actions button {
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}

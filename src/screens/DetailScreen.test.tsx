@@ -377,6 +377,8 @@ describe('DetailScreen set inputs', () => {
     fireEvent.click(within(container).getByRole('button', { name: /前回記録/ }));
     fireEvent.click(within(container).getByRole('button', { name: '前回記録をコピー' }));
 
+    expect(copyWorkoutSetValues).not.toHaveBeenCalled();
+    fireEvent.click(within(container).getByRole('button', { name: '上書きしてコピー' }));
     expect(copyWorkoutSetValues).toHaveBeenCalledWith('w1', previousWorkout.sets);
     const [weightInput, recordInput] = detailNumberInputs(container);
     expect(weightInput.value).toBe('45');
@@ -402,7 +404,32 @@ describe('DetailScreen set inputs', () => {
     fireEvent.click(within(container).getByRole('button', { name: /前回記録/ }));
     fireEvent.click(within(container).getByRole('button', { name: '前回記録をコピー' }));
 
+    expect(copyWorkoutSetValues).not.toHaveBeenCalled();
+    fireEvent.click(within(container).getByRole('button', { name: '上書きしてコピー' }));
     expect(copyWorkoutSetValues).toHaveBeenCalledWith('w1', previousWorkout.sets);
+  });
+
+  it.each([null, 0])('入力値%sの場合にコピーを確認し、キャンセルで値を保持する', (weight) => {
+    const copyWorkoutSetValues = vi.fn();
+    const current = { ...workout, sets: [{ id: 's1', weight, recordValue: null }] };
+    const previous = { ...workout, id: 'w0', date: '2026-07-01' };
+    const { container } = renderDetailScreen({
+      currentWorkout: current,
+      workouts: [previous, current],
+      copyWorkoutSetValues,
+    });
+    fireEvent.click(within(container).getByRole('button', { name: /前回記録/ }));
+    fireEvent.click(within(container).getByRole('button', { name: '前回記録をコピー' }));
+    if (weight === null) {
+      expect(within(container).queryByRole('dialog')).toBeNull();
+      expect(copyWorkoutSetValues).toHaveBeenCalledWith('w1', previous.sets);
+    } else {
+      expect(within(container).getByRole('dialog')).toBeTruthy();
+      fireEvent.click(within(container).getByRole('button', { name: 'キャンセル' }));
+      expect(copyWorkoutSetValues).not.toHaveBeenCalled();
+      expect(detailNumberInputs(container)[0].value).toBe('0');
+      expect(within(container).queryByRole('dialog')).toBeNull();
+    }
   });
 
   it('強度アイコンを押すとレストタイマー開始イベントを送る', () => {
