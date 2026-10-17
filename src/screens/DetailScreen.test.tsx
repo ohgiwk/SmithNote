@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { act, fireEvent, render, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { restTimerStartEvent } from '../components/RestTimer';
 import { SmithNoteContext, SmithNoteContextValue } from '../hooks/useSmithNoteContext';
@@ -113,11 +113,20 @@ function renderDetailScreen({
     },
   } as unknown as SmithNoteContextValue;
 
-  return render(
+  const result = render(
     <SmithNoteContext.Provider value={value}>
       <DetailScreen />
     </SmithNoteContext.Provider>,
   );
+  return {
+    ...result,
+    rerenderWorkout: (nextWorkout: Workout) =>
+      result.rerender(
+        <SmithNoteContext.Provider value={{ ...value, currentWorkout: nextWorkout }}>
+          <DetailScreen />
+        </SmithNoteContext.Provider>,
+      ),
+  };
 }
 
 function detailNumberInputs(container: HTMLElement) {
@@ -178,6 +187,34 @@ describe('DetailScreen set inputs', () => {
     expect(resumed.container.querySelector('.workout-usage-start')).toBeNull();
     fireEvent.click(within(resumed.container).getByRole('button', { name: '再開' }));
     expect(startWorkoutUsage).toHaveBeenCalledWith('w1');
+  });
+
+  it.each([0, 62])('開始・再開直後に展開し10秒後に閉じる（保存時間%s秒）', async (seconds) => {
+    vi.useFakeTimers();
+    const initialWorkout = { ...workout, usageElapsedSeconds: seconds };
+    const view = renderDetailScreen({ currentWorkout: initialWorkout });
+    try {
+      fireEvent.click(
+        within(view.container).getByRole('button', { name: seconds ? '再開' : '開始' }),
+      );
+      view.rerenderWorkout({ ...initialWorkout, usageStartedAt: new Date().toISOString() });
+      expect(within(view.container).getByRole('button', { name: '停止' })).toBeTruthy();
+      await act(() => vi.advanceTimersByTime(9999));
+      expect(within(view.container).getByRole('button', { name: 'リセット' })).toBeTruthy();
+      await act(() => vi.advanceTimersByTime(1));
+      expect(within(view.container).queryByRole('button', { name: '停止' })).toBeNull();
+      expect(
+        within(view.container).getByRole('button', { name: '実施時間タイマーを操作' }),
+      ).toBeTruthy();
+      fireEvent.click(
+        within(view.container).getByRole('button', { name: '実施時間タイマーを操作' }),
+      );
+      await act(() => vi.advanceTimersByTime(10000));
+      expect(within(view.container).getByRole('button', { name: '停止' })).toBeTruthy();
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
   });
 
   it('終了済みの詳細では実施時間を表示するだけで自動開始しない', () => {

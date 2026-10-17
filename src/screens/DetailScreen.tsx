@@ -77,6 +77,7 @@ function WorkoutUsageTimer({
 }) {
   const [now, setNow] = useState(Date.now());
   const [expanded, setExpanded] = useState(false);
+  const autoCollapseRef = useRef<number | undefined>(undefined);
   const actionRef = useRef({ onStart, onPause });
   actionRef.current = { onStart, onPause };
 
@@ -97,6 +98,21 @@ function WorkoutUsageTimer({
     };
   }, [workout.usageStartedAt]);
 
+  useEffect(() => {
+    return () => window.clearTimeout(autoCollapseRef.current);
+  }, [active, workout.id]);
+
+  function startUsage() {
+    window.clearTimeout(autoCollapseRef.current);
+    setExpanded(true);
+    onStart(workout.id);
+    autoCollapseRef.current = window.setTimeout(() => setExpanded(false), 10_000);
+  }
+
+  function cancelAutoCollapse() {
+    window.clearTimeout(autoCollapseRef.current);
+  }
+
   const elapsed = workoutUsageElapsedSeconds(workout, now);
   const running = Boolean(workout.usageStartedAt);
 
@@ -108,7 +124,7 @@ function WorkoutUsageTimer({
       aria-label="種目実施時間"
     >
       {!readOnly && !running && elapsed === 0 && !showActions ? (
-        <button className="workout-usage-start" type="button" onClick={() => onStart(workout.id)}>
+        <button className="workout-usage-start" type="button" onClick={startUsage}>
           開始
         </button>
       ) : (
@@ -117,7 +133,10 @@ function WorkoutUsageTimer({
           type="button"
           aria-expanded={showActions}
           aria-label={showActions ? '実施時間タイマーを閉じる' : '実施時間タイマーを操作'}
-          onClick={() => setExpanded((current) => !current)}
+          onClick={() => {
+            cancelAutoCollapse();
+            setExpanded((current) => !current);
+          }}
         >
           {showActions && <span>実施時間</span>}
           <strong aria-live="off">{formatWorkoutUsageTime(elapsed)}</strong>
@@ -127,11 +146,25 @@ function WorkoutUsageTimer({
         <div className="workout-usage-actions">
           <button
             type="button"
-            onClick={() => (running ? onPause(workout.id) : onStart(workout.id))}
+            onClick={() => {
+              if (running) {
+                cancelAutoCollapse();
+                onPause(workout.id);
+              } else {
+                startUsage();
+              }
+            }}
           >
             {running ? '停止' : elapsed > 0 ? '再開' : '開始'}
           </button>
-          <button className="secondary" type="button" onClick={() => onReset(workout.id)}>
+          <button
+            className="secondary"
+            type="button"
+            onClick={() => {
+              cancelAutoCollapse();
+              onReset(workout.id);
+            }}
+          >
             リセット
           </button>
         </div>

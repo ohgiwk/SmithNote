@@ -699,14 +699,18 @@
     padding 0.18s ease;
 }
 
+.workout-usage-timer:has(> .workout-usage-start) {
+  padding: 0;
+}
+
 .workout-usage-start {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 34px;
-  margin: 5px auto;
-  border-radius: 7px;
+  width: 100%;
+  min-height: 47px;
+  margin: 0;
+  border-radius: 0;
   padding: 0 20px;
   background: var(--red);
   color: var(--text-on-primary);
