@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   calculateWorkoutDurationMinutes,
   calcRm,
+  exerciseWeightStep,
   calendarCells,
   compactCalendarCells,
   formatStoredWeightInput,
@@ -366,5 +367,47 @@ describe('intensityOptions', () => {
   it('5段階の強度を持つ', () => {
     expect(intensityOptions).toHaveLength(5);
     expect(intensityOptions.map((option) => option.value)).toEqual([1, 2, 3, 4, 5]);
+  });
+});
+
+describe('種目別の重量増減幅', () => {
+  const current = { ...makeWorkout([]), date: '2026-10-17' };
+  function history(weights: number[], overrides: Partial<Workout> = {}): Workout {
+    return {
+      ...makeWorkout(
+        weights.map((weight, index) => ({ id: String(index), weight, recordValue: 10 })),
+      ),
+      date: '2026-10-16',
+      ...overrides,
+    };
+  }
+  it('過去記録の最小差を採用し、別種目・当日・未来の重量を除く', () => {
+    expect(
+      exerciseWeightStep(
+        [
+          history([40, 42.5, 45, 45]),
+          history([1, 1.5], { exerciseId: 'other' }),
+          history([1, 1.2], { date: current.date }),
+          history([1, 1.1], { date: '2026-10-18' }),
+        ],
+        current,
+        'kg',
+      ),
+    ).toBe(2.5);
+  });
+  it('履歴なし・同じ重量だけの場合は従来の幅を使う', () => {
+    expect(exerciseWeightStep([], current, 'kg')).toBe(0.5);
+    expect(exerciseWeightStep([history([40, 40])], current, 'lbs')).toBe(1);
+  });
+  it('Lbsに換算した表示重量から差を求める', () => {
+    expect(exerciseWeightStep([history([50 / 2.20462, 55 / 2.20462])], current, 'lbs')).toBe(5);
+  });
+  it('直近10回にない古い重量差は採用しない', () => {
+    const recent = Array.from({ length: 10 }, (_, index) =>
+      history([40, 45], { date: `2026-10-${String(index + 1).padStart(2, '0')}` }),
+    );
+    expect(
+      exerciseWeightStep([...recent, history([40, 40.5], { date: '2026-09-01' })], current, 'kg'),
+    ).toBe(5);
   });
 });

@@ -3,6 +3,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { ChevronDown, ChevronUp, HistoryIcon, PlusIcon, TrashIcon, UndoIcon } from '../icons';
 import {
   calcRm,
+  exerciseWeightStep,
   formatStoredWeightInput,
   formatWeight,
   formatWeightForStorageInput,
@@ -36,6 +37,9 @@ function useDetailScreenModel() {
   return {
     workout: currentWorkout,
     previousWorkout,
+    weightStep: currentWorkout
+      ? exerciseWeightStep(state.workouts, currentWorkout, state.weightUnit)
+      : 0.5,
     exercise,
     weightUnit: state.weightUnit,
     restTimerSettings: state.restTimerSettings,
@@ -619,6 +623,7 @@ export function DetailScreen() {
   const {
     workout,
     previousWorkout,
+    weightStep,
     exercise,
     weightUnit,
     restTimerSettings,
@@ -760,7 +765,7 @@ export function DetailScreen() {
               <label className="field">
                 <input
                   type="number"
-                  step={weightUnit === 'lbs' ? '1' : '0.5'}
+                  step={weightStep}
                   min="0"
                   inputMode="decimal"
                   readOnly={readOnly}

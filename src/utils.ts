@@ -176,6 +176,33 @@ export function convertWeightFromKg(value: string | number | null, unit: WeightU
   return unit === 'lbs' ? weight * 2.20462 : weight;
 }
 
+/**
+ * 同じ種目の直近１０回の過去記録から、表示単位での最小の重量差を求める
+ */
+export function exerciseWeightStep(
+  workouts: Workout[],
+  current: Workout,
+  unit: WeightUnit,
+): number {
+  const weights = [
+    ...new Set(
+      workouts
+        .filter((item) => item.exerciseId === current.exerciseId && item.date < current.date)
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 10)
+        .flatMap((item) => item.sets)
+        .filter((set) => set.weight !== null && Number.isFinite(set.weight) && set.weight > 0)
+        .map((set) => Math.round(convertWeightFromKg(set.weight, unit) * 10)),
+    ),
+  ].sort((a, b) => a - b);
+  if (weights.length < 2) return unit === 'lbs' ? 1 : 0.5;
+  let step = Infinity;
+  for (let index = 1; index < weights.length; index += 1) {
+    step = Math.min(step, weights[index] - weights[index - 1]);
+  }
+  return step / 10;
+}
+
 export function convertWeightToKg(value: string | number | null, unit: WeightUnit) {
   const weight = number(value);
   return unit === 'lbs' ? weight / 2.20462 : weight;
