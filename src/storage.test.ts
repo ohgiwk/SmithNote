@@ -626,3 +626,34 @@ describe('デフォルトのセット数の保存互換性', () => {
     expect(loadState().state.defaultSetCount).toBe(expected);
   });
 });
+
+describe('マルチセットの保存互換性', () => {
+  it.each([
+    ['group1', 1, 'group1', 1],
+    ['', -1, undefined, undefined],
+    [42, '1', undefined, undefined],
+  ])('グループ値を正規化する', (group, order, expectedGroup, expectedOrder) => {
+    const saved = makeValidSaved();
+    localStorage.setItem(
+      storeKey,
+      JSON.stringify({
+        ...saved,
+        workouts: [
+          {
+            id: 'w1',
+            exerciseId: 'e1',
+            name: 'ベンチ',
+            part: '胸',
+            date: '2026-10-17',
+            sets: [],
+            multiSetGroupId: group,
+            multiSetOrder: order,
+          },
+        ],
+      }),
+    );
+    const restored = loadState().state.workouts[0];
+    expect(restored.multiSetGroupId).toBe(expectedGroup);
+    expect(restored.multiSetOrder).toBe(expectedOrder);
+  });
+});

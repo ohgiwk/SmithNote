@@ -1,4 +1,5 @@
 import {
+  IconStack2,
   IconCalendarMonth,
   IconCategory,
   IconChartBar,
@@ -104,4 +105,8 @@ export function PartsIcon() {
 
 export function AccountIcon() {
   return <IconUserCircle />;
+}
+
+export function MultiSetIcon() {
+  return <IconStack2 aria-hidden="true" />;
 }

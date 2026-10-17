@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SmithNoteContext, SmithNoteContextValue } from '../hooks/useSmithNoteContext';
 import type { Exercise, Workout } from '../types';
 import { frequentExercisesForPart } from '../utils';
-import { ExerciseManageScreen } from './SelectScreen';
+import { ExerciseManageScreen, SelectScreen } from './SelectScreen';
 
 const exercise: Exercise = {
   id: 'e1',
@@ -87,5 +87,38 @@ describe('frequentExercisesForPart', () => {
       'e3',
       'e2',
     ]);
+  });
+});
+
+describe('マルチセットの選択', () => {
+  it('選択順で確定し、解除と通常モードへの復帰に対応する', () => {
+    const startMultiSet = vi.fn();
+    const addExerciseToToday = vi.fn();
+    const exercises = [exercise, { ...exercise, id: 'e2', name: 'フライ' }];
+    const value = {
+      state: { workouts: [] },
+      groupedExercises: new Map([['胸', exercises]]),
+      partRecentLabels: new Map(),
+      partColors: new Map(),
+      activePart: '胸',
+      actions: { startMultiSet, addExerciseToToday, setScreen: vi.fn(), selectPart: vi.fn() },
+    } as unknown as SmithNoteContextValue;
+    const view = render(
+      <SmithNoteContext.Provider value={value}>
+        <SelectScreen />
+      </SmithNoteContext.Provider>,
+    );
+    const ui = within(view.container);
+    fireEvent.click(ui.getByRole('button', { name: 'マルチセットモード' }));
+    expect(ui.getByRole('button', { name: '0種目で確定' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.click(ui.getByRole('button', { name: /フライ/ }));
+    fireEvent.click(ui.getByRole('button', { name: /ベンチプレス/ }));
+    expect(addExerciseToToday).not.toHaveBeenCalled();
+    fireEvent.click(ui.getByRole('button', { name: '2種目で確定' }));
+    expect(startMultiSet).toHaveBeenCalledWith(['e2', 'e1']);
+    fireEvent.click(ui.getByRole('button', { name: /フライ/ }));
+    expect(ui.getByRole('button', { name: '1種目で確定' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.click(ui.getByRole('button', { name: '通常モードに戻す' }));
+    expect(ui.queryByRole('button', { name: /種目で確定/ })).toBeNull();
   });
 });

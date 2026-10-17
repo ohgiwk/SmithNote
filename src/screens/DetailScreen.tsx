@@ -1,8 +1,9 @@
-import { MouseEvent, PointerEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { Fragment, MouseEvent, PointerEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { ChevronDown, ChevronUp, HistoryIcon, PlusIcon, TrashIcon, UndoIcon } from '../icons';
 import {
+  interleaveWorkoutSets,
   calcRm,
   exerciseWeightStep,
   formatStoredWeightInput,
@@ -35,18 +36,35 @@ function useDetailScreenModel() {
     ? findPreviousWorkout(state.workouts, currentWorkout)
     : undefined;
 
+  const groupWorkouts = currentWorkout?.multiSetGroupId
+    ? state.workouts
+        .filter(
+          (item) =>
+            item.date === currentWorkout.date &&
+            item.multiSetGroupId === currentWorkout.multiSetGroupId,
+        )
+        .sort((a, b) => (a.multiSetOrder ?? 0) - (b.multiSetOrder ?? 0))
+    : currentWorkout
+      ? [currentWorkout]
+      : [];
+
   return {
     workout: currentWorkout,
     previousWorkout,
-    weightStep: currentWorkout
-      ? exerciseWeightStep(state.workouts, currentWorkout, state.weightUnit)
-      : 0.5,
+    groupWorkouts,
+    rows: interleaveWorkoutSets(groupWorkouts).map((row) => ({
+      ...row,
+      weightStep: exerciseWeightStep(state.workouts, row.workout, state.weightUnit),
+    })),
+    onSelectGroupWorkout: actions.openWorkoutDetail,
+    onAddMultiSetRound: actions.addMultiSetRound,
     exercise,
     weightUnit: state.weightUnit,
     restTimerSettings: state.restTimerSettings,
     active: screen === 'detail',
     readOnly: Boolean(currentWorkout && state.workoutEndTimes[currentWorkout.date]),
     onOpenHistory: () => actions.setScreen('exerciseHistory'),
+    onOpenWorkoutHistory: actions.openWorkoutHistory,
     onUpdateSet: actions.updateSet,
     onUpdateSetAchievement: actions.updateSetAchievement,
     onResetSetAchievement: actions.resetSetAchievement,
@@ -624,13 +642,17 @@ export function DetailScreen() {
   const {
     workout,
     previousWorkout,
-    weightStep,
+    groupWorkouts,
+    rows,
+    onSelectGroupWorkout,
+    onAddMultiSetRound,
     exercise,
     weightUnit,
     restTimerSettings,
     active,
     readOnly,
     onOpenHistory,
+    onOpenWorkoutHistory,
     onUpdateSet,
     onUpdateSetAchievement,
     onResetSetAchievement,
@@ -647,6 +669,27 @@ export function DetailScreen() {
     onPauseWorkoutUsage,
     onResetWorkoutUsage,
   } = useDetailScreenModel();
+  const [historyMenuOpen, setHistoryMenuOpen] = useState(false);
+  const historyMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!historyMenuOpen) return undefined;
+    historyMenuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+    function closeFromOutside(event: globalThis.PointerEvent) {
+      if (event.target instanceof Node && !historyMenuRef.current?.contains(event.target))
+        setHistoryMenuOpen(false);
+    }
+    function closeFromEscape(event: globalThis.KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      setHistoryMenuOpen(false);
+      historyMenuRef.current?.querySelector<HTMLButtonElement>('.history-btn')?.focus();
+    }
+    document.addEventListener('pointerdown', closeFromOutside);
+    document.addEventListener('keydown', closeFromEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeFromOutside);
+      document.removeEventListener('keydown', closeFromEscape);
+    };
+  }, [historyMenuOpen]);
   const [copyConfirmationOpen, setCopyConfirmationOpen] = useState(false);
   const [openDeleteSetId, setOpenDeleteSetId] = useState<string | null>(null);
   const [weightInputs, setWeightInputs] = useState<Record<string, string>>({});
@@ -655,8 +698,8 @@ export function DetailScreen() {
   useEffect(() => setShowTodayNote(Boolean(workout?.note)), [workout?.id, workout?.note]);
   if (!workout) return null;
   const currentWorkout = workout;
-  const isReps = isRepsMeasurement(workout.measurementType);
-  const unit = measurementUnit(workout.measurementType);
+  const isMultiSet = groupWorkouts.length > 1;
+  const groupLabel = groupWorkouts.length === 2 ? 'スーパーセット' : 'マルチセット';
   function weightInputValue(setId: string, value: number | null) {
     return weightInputs[setId] ?? formatStoredWeightInput(value, weightUnit);
   }
@@ -729,11 +772,66 @@ export function DetailScreen() {
   return (
     <section className="screen active detail-screen">
       <ScreenHeader
-        title={workout.name}
+        title={isMultiSet ? groupLabel : workout.name}
         right={
-          <button className="history-btn" type="button" aria-label="履歴" onClick={onOpenHistory}>
-            <HistoryIcon />
-          </button>
+          <div className="detail-history-control" ref={historyMenuRef}>
+            <button
+              className="history-btn"
+              type="button"
+              aria-label="履歴"
+              aria-haspopup={isMultiSet ? 'menu' : undefined}
+              aria-expanded={isMultiSet ? historyMenuOpen : undefined}
+              aria-controls={historyMenuOpen ? 'multi-set-history-menu' : undefined}
+              onClick={() =>
+                isMultiSet ? setHistoryMenuOpen((current) => !current) : onOpenHistory()
+              }
+            >
+              <HistoryIcon />
+            </button>
+            {historyMenuOpen && (
+              <div
+                className="multi-set-history-menu"
+                id="multi-set-history-menu"
+                role="menu"
+                aria-label="履歴を見る種目を選択"
+                onKeyDown={(event) => {
+                  const items = [
+                    ...event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
+                  ];
+                  const current = items.findIndex((item) => item === document.activeElement);
+                  if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+                    event.preventDefault();
+                    const next =
+                      event.key === 'Home'
+                        ? 0
+                        : event.key === 'End'
+                          ? items.length - 1
+                          : (current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) %
+                            items.length;
+                    items[next]?.focus();
+                  } else if (event.key === 'Tab') setHistoryMenuOpen(false);
+                }}
+              >
+                <div className="multi-set-history-menu-title" role="presentation">
+                  種目の履歴を見る
+                </div>
+                {groupWorkouts.map((member) => (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    key={member.id}
+                    onClick={() => {
+                      setHistoryMenuOpen(false);
+                      onOpenWorkoutHistory(member.id);
+                    }}
+                  >
+                    <span>{member.part}</span>
+                    <strong>{member.name}</strong>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         }
       />
       <WorkoutUsageTimer
@@ -745,6 +843,23 @@ export function DetailScreen() {
         onReset={onResetWorkoutUsage}
       />
       <div className="content">
+        {isMultiSet && (
+          <section className="multi-set-members" aria-label="マルチセットの種目">
+            <ul>
+              {groupWorkouts.map((member) => (
+                <li key={member.id}>
+                  <button
+                    type="button"
+                    aria-pressed={member.id === workout.id}
+                    onClick={() => onSelectGroupWorkout(member.id)}
+                  >
+                    {member.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {exercise && (
           <>
             <ExerciseGoalEditor
@@ -763,113 +878,171 @@ export function DetailScreen() {
             />
           </>
         )}
-        <div className="detail-table">
-          {workout.sets.map((set, index) => (
-            <SwipeableSetRow
-              key={set.id}
-              open={openDeleteSetId === set.id}
-              readOnly={readOnly}
-              deleteLabel={`${index + 1}セット目を削除`}
-              onOpenChange={(open) => setOpenDeleteSetId(open ? set.id : null)}
-              onDelete={() => {
-                setOpenDeleteSetId(null);
-                onDeleteSet(set.id);
-              }}
-            >
-              <div className="num">{index + 1}</div>
-              <label className="field">
-                <input
-                  type="number"
-                  step={weightStep}
-                  min="0"
-                  inputMode="decimal"
+        <div className={`detail-table ${isMultiSet ? 'multi-set-table' : ''}`}>
+          {rows.map(({ set, index, workout: rowWorkout, weightStep }, rowIndex) => {
+            const unit = measurementUnit(rowWorkout.measurementType);
+            const isReps = isRepsMeasurement(rowWorkout.measurementType);
+            const roundSets = rows.filter((row) => row.index === index).map((row) => row.set);
+            const lastInRound = rows[rowIndex + 1]?.index !== index;
+            return (
+              <Fragment key={set.id}>
+                <SwipeableSetRow
+                  open={openDeleteSetId === set.id}
                   readOnly={readOnly}
-                  value={weightInputValue(set.id, set.weight)}
-                  onBlur={() => releaseInput(set.id)}
-                  onChange={(event) => updateWeightInput(set.id, event.target.value)}
-                />
-                <span className="unit">{weightUnitLabel(weightUnit)}</span>
-              </label>
-              <label className="field">
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  inputMode="numeric"
-                  readOnly={readOnly}
-                  value={recordInputValue(set.id, set.recordValue)}
-                  onBlur={() => releaseInput(set.id)}
-                  onChange={(event) => updateRecordInput(set.id, event.target.value)}
-                />
-                <span className="unit">{unit}</span>
-                {set.achievement === 'missed' && typeof set.targetRecordValue === 'number' && (
-                  <span className="target-value">
-                    目標 {set.targetRecordValue}
-                    {unit}
-                  </span>
-                )}
-              </label>
-              <div className="rm-value">
-                {isReps
-                  ? `${formatWeight(
-                      calcRm(number(set.weight), number(set.recordValue)),
-                      weightUnit,
-                    )} ${weightUnitLabel(weightUnit)}`
-                  : '-'}
-              </div>
-              {set.achievement ? (
-                <div className="intensity-picker" aria-label={`${index + 1}セット目の強度`}>
-                  {intensityOptions.map((option) => (
-                    <button
-                      className={`intensity-button intensity-button-${option.value}${set.intensity === option.value ? ' active' : ''}`}
-                      key={option.value}
-                      type="button"
-                      disabled={readOnly}
-                      aria-label={option.label}
-                      aria-pressed={set.intensity === option.value}
-                      onClick={() => updateIntensity(set.id, set.intensity, option.value)}
+                  deleteLabel={`${isMultiSet ? rowWorkout.name + 'の' : ''}${index + 1}セット目を削除`}
+                  onOpenChange={(open) => setOpenDeleteSetId(open ? set.id : null)}
+                  onDelete={() => {
+                    setOpenDeleteSetId(null);
+                    onDeleteSet(set.id);
+                  }}
+                >
+                  {isMultiSet && <div className="multi-set-row-title">{rowWorkout.name}</div>}
+                  <div className="num">{index + 1}</div>
+                  <label className="field">
+                    <input
+                      type="number"
+                      step={weightStep}
+                      min="0"
+                      inputMode="decimal"
+                      readOnly={readOnly}
+                      value={weightInputValue(set.id, set.weight)}
+                      onBlur={() => releaseInput(set.id)}
+                      onChange={(event) => updateWeightInput(set.id, event.target.value)}
+                    />
+                    <span className="unit">{weightUnitLabel(weightUnit)}</span>
+                  </label>
+                  <label className="field">
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      inputMode="numeric"
+                      readOnly={readOnly}
+                      value={recordInputValue(set.id, set.recordValue)}
+                      onBlur={() => releaseInput(set.id)}
+                      onChange={(event) => updateRecordInput(set.id, event.target.value)}
+                    />
+                    <span className="unit">{unit}</span>
+                    {set.achievement === 'missed' && typeof set.targetRecordValue === 'number' && (
+                      <span className="target-value">
+                        目標 {set.targetRecordValue}
+                        {unit}
+                      </span>
+                    )}
+                  </label>
+                  <div className="rm-value">
+                    {isReps
+                      ? `${formatWeight(
+                          calcRm(number(set.weight), number(set.recordValue)),
+                          weightUnit,
+                        )} ${weightUnitLabel(weightUnit)}`
+                      : '-'}
+                  </div>
+                  {set.achievement ? (
+                    <div className="intensity-picker" aria-label={`${index + 1}セット目の強度`}>
+                      {intensityOptions.map((option) => (
+                        <button
+                          className={`intensity-button intensity-button-${option.value}${set.intensity === option.value ? ' active' : ''}`}
+                          key={option.value}
+                          type="button"
+                          disabled={readOnly}
+                          aria-label={option.label}
+                          aria-pressed={set.intensity === option.value}
+                          onClick={() => updateIntensity(set.id, set.intensity, option.value)}
+                        >
+                          <IntensityIcon intensity={option.value} />
+                        </button>
+                      ))}
+                      {!isMultiSet && (
+                        <button
+                          className="intensity-reset-button"
+                          type="button"
+                          disabled={readOnly}
+                          aria-label={`${index + 1}セット目の達成判定を戻す`}
+                          onClick={() => onResetSetAchievement(set.id)}
+                        >
+                          <UndoIcon />
+                        </button>
+                      )}
+                    </div>
+                  ) : !isMultiSet ? (
+                    <div
+                      className="achievement-actions"
+                      aria-label={`${index + 1}セット目の達成状態`}
                     >
-                      <IntensityIcon intensity={option.value} />
-                    </button>
-                  ))}
-                  <button
-                    className="intensity-reset-button"
-                    type="button"
-                    disabled={readOnly}
-                    aria-label={`${index + 1}セット目の達成判定を戻す`}
-                    onClick={() => onResetSetAchievement(set.id)}
+                      <button
+                        className="achievement-button achieved"
+                        type="button"
+                        disabled={readOnly || set.recordValue === null}
+                        onClick={() => onUpdateSetAchievement(set.id, 'achieved')}
+                      >
+                        達成
+                      </button>
+                      <button
+                        className="achievement-button missed"
+                        type="button"
+                        disabled={readOnly || set.recordValue === null}
+                        onClick={() => markSetMissed(set.id)}
+                      >
+                        未達
+                      </button>
+                    </div>
+                  ) : null}
+                </SwipeableSetRow>
+                {isMultiSet && lastInRound && (
+                  <div
+                    className="multi-set-round-actions"
+                    role="group"
+                    aria-label={`${index + 1}セット目の達成状態`}
                   >
-                    <UndoIcon />
-                  </button>
-                </div>
-              ) : (
-                <div className="achievement-actions" aria-label={`${index + 1}セット目の達成状態`}>
-                  <button
-                    className="achievement-button achieved"
-                    type="button"
-                    disabled={readOnly || set.recordValue === null}
-                    onClick={() => onUpdateSetAchievement(set.id, 'achieved')}
-                  >
-                    達成
-                  </button>
-                  <button
-                    className="achievement-button missed"
-                    type="button"
-                    disabled={readOnly || set.recordValue === null}
-                    onClick={() => markSetMissed(set.id)}
-                  >
-                    未達
-                  </button>
-                </div>
-              )}
-            </SwipeableSetRow>
-          ))}
+                    {roundSets.every((item) => item.achievement) ? (
+                      <button
+                        className="small-outline"
+                        type="button"
+                        disabled={readOnly}
+                        aria-label={`${index + 1}セット目の達成判定を戻す`}
+                        onClick={() =>
+                          roundSets.forEach((item) => {
+                            releaseInput(item.id);
+                            onResetSetAchievement(item.id);
+                          })
+                        }
+                      >
+                        <UndoIcon /> 判定を戻す
+                      </button>
+                    ) : (
+                      <div className="achievement-actions">
+                        <button
+                          className="achievement-button achieved"
+                          type="button"
+                          disabled={readOnly || roundSets.some((item) => item.recordValue === null)}
+                          onClick={() =>
+                            roundSets.forEach((item) => onUpdateSetAchievement(item.id, 'achieved'))
+                          }
+                        >
+                          達成
+                        </button>
+                        <button
+                          className="achievement-button missed"
+                          type="button"
+                          disabled={readOnly || roundSets.some((item) => item.recordValue === null)}
+                          onClick={() => roundSets.forEach((item) => markSetMissed(item.id))}
+                        >
+                          未達
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Fragment>
+            );
+          })}
           {!readOnly && (
             <button
               className="detail-add-set"
               type="button"
-              aria-label="セットを追加"
-              onClick={() => onAddSet(workout.id)}
+              aria-label={isMultiSet ? '各種目にセットを追加' : 'セットを追加'}
+              onClick={() => (isMultiSet ? onAddMultiSetRound(workout.id) : onAddSet(workout.id))}
             >
               <PlusIcon />
             </button>

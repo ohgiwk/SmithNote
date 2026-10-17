@@ -54,6 +54,8 @@ function renderDetailScreen({
   copyWorkoutSetValues = vi.fn(),
   updateWorkoutNote = vi.fn(),
   updateExerciseNote = vi.fn(),
+  openWorkoutHistory = vi.fn(),
+  setScreen = vi.fn(),
   startWorkoutUsage = vi.fn(),
   pauseWorkoutUsage = vi.fn(),
   resetWorkoutUsage = vi.fn(),
@@ -69,6 +71,8 @@ function renderDetailScreen({
   copyWorkoutSetValues?: ReturnType<typeof vi.fn>;
   updateWorkoutNote?: ReturnType<typeof vi.fn>;
   updateExerciseNote?: ReturnType<typeof vi.fn>;
+  openWorkoutHistory?: ReturnType<typeof vi.fn>;
+  setScreen?: ReturnType<typeof vi.fn>;
   startWorkoutUsage?: ReturnType<typeof vi.fn>;
   pauseWorkoutUsage?: ReturnType<typeof vi.fn>;
   resetWorkoutUsage?: ReturnType<typeof vi.fn>;
@@ -92,7 +96,8 @@ function renderDetailScreen({
       },
     },
     actions: {
-      setScreen: vi.fn(),
+      setScreen,
+      openWorkoutHistory,
       updateSet,
       updateSetAchievement,
       resetSetAchievement,
@@ -215,6 +220,155 @@ describe('DetailScreen set inputs', () => {
       view.unmount();
       vi.useRealTimers();
     }
+  });
+
+  it('マルチセットを種目名付きで交互に表示し、各種目の単位を使う', () => {
+    const first = {
+      ...workout,
+      multiSetGroupId: 'g1',
+      multiSetOrder: 0,
+      sets: [
+        { id: 'a1', weight: 50, recordValue: 10 },
+        { id: 'a2', weight: 45, recordValue: 12 },
+      ],
+    };
+    const second = {
+      ...workout,
+      id: 'w2',
+      exerciseId: 'e2',
+      name: 'プランク',
+      measurementType: 'seconds' as const,
+      multiSetGroupId: 'g1',
+      multiSetOrder: 1,
+      sets: [{ id: 'b1', weight: 0, recordValue: 30 }],
+    };
+    const updateSet = vi.fn();
+    const view = renderDetailScreen({
+      currentWorkout: first,
+      workouts: [second, first],
+      updateSet,
+    });
+    expect(
+      [...view.container.querySelectorAll('.multi-set-row-title')].map((item) => item.textContent),
+    ).toEqual(['ベンチプレス', 'プランク', 'ベンチプレス']);
+    const rows = view.container.querySelectorAll('.detail-row');
+    expect(rows[1].textContent).toContain('秒');
+    fireEvent.change(rows[1].querySelectorAll('input')[1], { target: { value: '45' } });
+    expect(updateSet).toHaveBeenCalledWith('b1', 'recordValue', 45);
+    expect(
+      within(view.container).getByRole('button', { name: '各種目にセットを追加' }),
+    ).toBeTruthy();
+  });
+
+  it('スーパーセットの達成判定をラウンドごとに配置し全種目へ適用する', () => {
+    const first = { ...workout, multiSetGroupId: 'g1', multiSetOrder: 0 };
+    const second = {
+      ...workout,
+      id: 'w2',
+      exerciseId: 'e2',
+      name: 'フライ',
+      multiSetGroupId: 'g1',
+      multiSetOrder: 1,
+      sets: [{ id: 's2', weight: 20, recordValue: 12 }],
+    };
+    const updateSetAchievement = vi.fn();
+    const resetSetAchievement = vi.fn();
+    const view = renderDetailScreen({
+      currentWorkout: first,
+      workouts: [first, second],
+      updateSetAchievement,
+      resetSetAchievement,
+    });
+    expect(view.container.querySelectorAll('.detail-row .achievement-actions')).toHaveLength(0);
+    const controls = within(view.container).getByRole('group', { name: '1セット目の達成状態' });
+    expect(within(view.container).getAllByRole('button', { name: '達成' })).toHaveLength(1);
+    fireEvent.click(within(controls).getByRole('button', { name: '達成' }));
+    expect(updateSetAchievement.mock.calls).toEqual([
+      ['s1', 'achieved'],
+      ['s2', 'achieved'],
+    ]);
+    updateSetAchievement.mockClear();
+    fireEvent.click(within(controls).getByRole('button', { name: '未達' }));
+    expect(updateSetAchievement.mock.calls).toEqual([
+      ['s1', 'missed'],
+      ['s2', 'missed'],
+    ]);
+    view.unmount();
+    const achievedFirst = {
+      ...first,
+      sets: first.sets.map((set) => ({ ...set, achievement: 'achieved' as const })),
+    };
+    const achievedSecond = {
+      ...second,
+      sets: second.sets.map((set) => ({ ...set, achievement: 'achieved' as const })),
+    };
+    const achieved = renderDetailScreen({
+      currentWorkout: achievedFirst,
+      workouts: [achievedFirst, achievedSecond],
+      resetSetAchievement,
+    });
+    expect(achieved.container.querySelectorAll('.intensity-picker')).toHaveLength(2);
+    fireEvent.click(
+      within(achieved.container).getByRole('button', { name: '1セット目の達成判定を戻す' }),
+    );
+    expect(resetSetAchievement.mock.calls).toEqual([['s1'], ['s2']]);
+  });
+
+  it('ラウンド内の種目が未入力なら一括判定を無効にする', () => {
+    const first = { ...workout, multiSetGroupId: 'g1' };
+    const second = { ...first, id: 'w2', sets: [{ id: 's2', weight: null, recordValue: null }] };
+    const view = renderDetailScreen({ currentWorkout: first, workouts: [first, second] });
+    const controls = within(view.container).getByRole('group', { name: '1セット目の達成状態' });
+    expect(within(controls).getByRole('button', { name: '達成' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+    expect(within(controls).getByRole('button', { name: '未達' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+  });
+
+  it('スーパーセットの履歴ボタンで種目を選び、対象の履歴へ進む', () => {
+    const first = { ...workout, multiSetGroupId: 'g1' };
+    const second = {
+      ...first,
+      id: 'w2',
+      exerciseId: 'e2',
+      part: '背中',
+      name: 'ロウ',
+      multiSetOrder: 1,
+      sets: [],
+    };
+    const openWorkoutHistory = vi.fn();
+    const view = renderDetailScreen({
+      currentWorkout: first,
+      workouts: [first, second],
+      openWorkoutHistory,
+    });
+    const ui = within(view.container);
+    fireEvent.click(ui.getByRole('button', { name: '履歴' }));
+    const menu = ui.getByRole('menu', { name: '履歴を見る種目を選択' });
+    expect(ui.queryByRole('dialog')).toBeNull();
+    expect(openWorkoutHistory).not.toHaveBeenCalled();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: /ロウ/ }));
+    expect(openWorkoutHistory).toHaveBeenCalledWith('w2');
+    expect(ui.queryByRole('dialog')).toBeNull();
+    openWorkoutHistory.mockClear();
+    fireEvent.click(ui.getByRole('button', { name: '履歴' }));
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(ui.queryByRole('menu')).toBeNull();
+    fireEvent.click(ui.getByRole('button', { name: '履歴' }));
+    fireEvent.pointerDown(document.body);
+    expect(ui.queryByRole('menu')).toBeNull();
+    expect(openWorkoutHistory).not.toHaveBeenCalled();
+    expect(ui.queryByRole('dialog')).toBeNull();
+  });
+
+  it('通常種目の履歴ボタンは直接履歴へ進む', () => {
+    const setScreen = vi.fn();
+    const view = renderDetailScreen({ setScreen });
+    fireEvent.click(within(view.container).getByRole('button', { name: '履歴' }));
+    expect(setScreen).toHaveBeenCalledWith('exerciseHistory');
+    expect(within(view.container).queryByRole('dialog')).toBeNull();
   });
 
   it('終了済みの詳細では実施時間を表示するだけで自動開始しない', () => {

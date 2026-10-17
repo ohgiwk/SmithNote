@@ -2,6 +2,7 @@ import { MouseEvent, PointerEvent, useEffect, useRef, useState } from 'react';
 import { PlusIcon, TrashIcon } from '../icons';
 import { Preset, Workout } from '../types';
 import {
+  groupWorkoutPanels,
   calculateWorkoutDurationMinutes,
   formatWorkoutDuration,
   formatWorkoutTime,
@@ -10,6 +11,7 @@ import {
   localDate,
   parseDate,
 } from '../utils';
+import { HomeMultiSetCard } from '../components/HomeMultiSetCard';
 import { HomeSetRow } from '../components/HomeSetRow';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useSmithNoteContext } from '../hooks/useSmithNoteContext';
@@ -430,7 +432,12 @@ export function HomeScreen({ onOverlayStateChange }: HomeScreenProps) {
    */
   function requestDelete(event: MouseEvent<HTMLButtonElement>, workout: Workout) {
     event.stopPropagation();
-    if (isUnstartedWorkout(workout)) {
+    const targets = selectedWorkouts.filter(
+      (item) =>
+        item.id === workout.id ||
+        Boolean(workout.multiSetGroupId && item.multiSetGroupId === workout.multiSetGroupId),
+    );
+    if (targets.every(isUnstartedWorkout)) {
       removeWorkoutAfterAnimation(workout.id);
       return;
     }
@@ -583,73 +590,88 @@ export function HomeScreen({ onOverlayStateChange }: HomeScreenProps) {
           </div>
         )}
         <div className={`content ${contentMotionClassName}`} key={`content-${page.date}`}>
-          {page.workouts.map((workout) => (
-            <article
-              className={`exercise-card ${removingWorkoutId === workout.id ? 'removing' : ''}`}
-              key={workout.id}
-            >
-              <button
-                className="exercise-card-open"
-                type="button"
-                aria-label={`${workout.name}の詳細を開く`}
-                disabled={removingWorkoutId === workout.id}
-                onClick={() => onOpenDetail(workout.id)}
-              />
-              <header
-                className="exercise-head"
-                style={{ borderLeftColor: partColors.get(workout.part) }}
+          {groupWorkoutPanels(page.workouts).map((members) => {
+            const workout = members[0];
+            if (members.length > 1)
+              return (
+                <HomeMultiSetCard
+                  key={workout.multiSetGroupId}
+                  workouts={members}
+                  weightUnit={weightUnit}
+                  readOnly={Boolean(page.workoutEndTime)}
+                  removingWorkoutId={removingWorkoutId}
+                  onOpen={onOpenDetail}
+                  onDelete={requestDelete}
+                />
+              );
+            return (
+              <article
+                className={`exercise-card ${removingWorkoutId === workout.id ? 'removing' : ''}`}
+                key={workout.id}
               >
-                <h2>
-                  <span className="exercise-head-part">{workout.part}</span>
-                  <span className="exercise-head-separator" aria-hidden="true">
-                    ｜
-                  </span>
-                  <span className="exercise-head-name">{workout.name}</span>
-                </h2>
-              </header>
-              <div className="exercise-body">
-                <table className="set-table">
-                  <thead>
-                    <tr>
-                      <th>セット</th>
-                      <th>重さ</th>
-                      <th>記録</th>
-                      <th>RM</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {workout.sets.map((set, setIndex) => (
-                      <HomeSetRow
-                        key={set.id}
-                        set={set}
-                        index={setIndex}
-                        measurementType={workout.measurementType}
-                        weightUnit={weightUnit}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-                {workout.note.trim() && <p className="exercise-today-note">{workout.note}</p>}
-                {!page.workoutEndTime && isUnstartedWorkout(workout) && (
-                  <div className="new-workout-overlay" aria-hidden="true">
-                    <div className="new-workout-overlay-icon">
-                      <PlusIcon />
-                    </div>
-                  </div>
-                )}
-              </div>
-              {!page.workoutEndTime && (
                 <button
-                  className="delete-workout"
+                  className="exercise-card-open"
                   type="button"
-                  aria-label={`${workout.name}を削除`}
-                  onClick={(event) => requestDelete(event, workout)}
+                  aria-label={`${workout.name}の詳細を開く`}
+                  disabled={removingWorkoutId === workout.id}
+                  onClick={() => onOpenDetail(workout.id)}
+                />
+                <header
+                  className="exercise-head"
+                  style={{ borderLeftColor: partColors.get(workout.part) }}
                 >
-                  <TrashIcon />
-                </button>
-              )}
-            </article>
-          ))}
+                  <h2>
+                    <span className="exercise-head-part">{workout.part}</span>
+                    <span className="exercise-head-separator" aria-hidden="true">
+                      ｜
+                    </span>
+                    <span className="exercise-head-name">{workout.name}</span>
+                  </h2>
+                </header>
+                <div className="exercise-body">
+                  <table className="set-table">
+                    <thead>
+                      <tr>
+                        <th>セット</th>
+                        <th>重さ</th>
+                        <th>記録</th>
+                        <th>RM</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workout.sets.map((set, setIndex) => (
+                        <HomeSetRow
+                          key={set.id}
+                          set={set}
+                          index={setIndex}
+                          measurementType={workout.measurementType}
+                          weightUnit={weightUnit}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                  {workout.note.trim() && <p className="exercise-today-note">{workout.note}</p>}
+                  {!page.workoutEndTime && isUnstartedWorkout(workout) && (
+                    <div className="new-workout-overlay" aria-hidden="true">
+                      <div className="new-workout-overlay-icon">
+                        <PlusIcon />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {!page.workoutEndTime && (
+                  <button
+                    className="delete-workout"
+                    type="button"
+                    aria-label={`${workout.name}を削除`}
+                    onClick={(event) => requestDelete(event, workout)}
+                  >
+                    <TrashIcon />
+                  </button>
+                )}
+              </article>
+            );
+          })}
           {page.workoutStartTime && !page.workoutEndTime && !!page.workouts.length && (
             <button
               className="primary workout-action-button"
@@ -722,7 +744,12 @@ export function HomeScreen({ onOverlayStateChange }: HomeScreenProps) {
           onClose={() => setDeleteTarget(null)}
         >
           <p>
-            {deleteTarget.part} - {deleteTarget.name} の記録をこの日から削除します。
+            {deleteTarget.multiSetGroupId
+              ? `${selectedWorkouts
+                  .filter((item) => item.multiSetGroupId === deleteTarget.multiSetGroupId)
+                  .map((item) => item.name)
+                  .join('、')} のグループ全種目の記録をこの日から削除します。`
+              : `${deleteTarget.part} - ${deleteTarget.name} の記録をこの日から削除します。`}
           </p>
           <div className="confirm-actions">
             <button className="small-outline" type="button" onClick={() => setDeleteTarget(null)}>

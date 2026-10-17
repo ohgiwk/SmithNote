@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ExercisePicker } from '../components/ExercisePicker';
+import { EditIcon, MultiSetIcon } from '../icons';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useSmithNoteContext } from '../hooks/useSmithNoteContext';
 import type { Exercise } from '../types';
@@ -18,6 +19,7 @@ function useSelectScreenModel() {
     partColors,
     activePart,
     onOpenExerciseManager: () => actions.setScreen('exerciseManage'),
+    onStartMultiSet: actions.startMultiSet,
     onAddExercise: actions.addExerciseToToday,
     onReorder: actions.reorderPartExercises,
     onDeleteExercise: actions.deleteExercise,
@@ -30,6 +32,8 @@ function useSelectScreenModel() {
 function ExerciseListScreen({ mode }: { mode: ExerciseListMode }) {
   const model = useSelectScreenModel();
   const isManageMode = mode === 'manage';
+  const [multiMode, setMultiMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
   const currentPart =
     model.activePart && model.groupedExercises.has(model.activePart)
@@ -58,12 +62,51 @@ function ExerciseListScreen({ mode }: { mode: ExerciseListMode }) {
         title={mode === 'manage' ? '種目一覧を編集' : '種目を選択'}
         right={
           isManageMode ? undefined : (
-            <button className="bar-btn right" type="button" onClick={model.onOpenExerciseManager}>
-              編集
-            </button>
+            <div className="select-header-actions">
+              <button
+                className="multi-set-mode-toggle"
+                type="button"
+                aria-label={multiMode ? '通常モードに戻す' : 'マルチセットモード'}
+                title={multiMode ? '通常モードに戻す' : 'マルチセットモード'}
+                aria-pressed={multiMode}
+                onClick={() => {
+                  setMultiMode((current) => !current);
+                  setSelectedIds([]);
+                }}
+              >
+                <MultiSetIcon />
+              </button>
+              <button
+                className="select-edit-button"
+                type="button"
+                aria-label="種目を編集"
+                title="種目を編集"
+                onClick={model.onOpenExerciseManager}
+              >
+                <EditIcon />
+              </button>
+            </div>
           )
         }
       />
+      {!isManageMode && multiMode && (
+        <div className="multi-set-selection">
+          <h2 className="multi-set-selection-title">マルチセットモード</h2>
+          {multiMode && (
+            <>
+              <p>2種目以上を選択してください。</p>
+              <button
+                className="danger-button"
+                type="button"
+                disabled={selectedIds.length < 2}
+                onClick={() => model.onStartMultiSet(selectedIds)}
+              >
+                {selectedIds.length}種目で確定
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <ExercisePicker
         activePart={model.activePart}
         groupedExercises={model.groupedExercises}
@@ -74,13 +117,21 @@ function ExerciseListScreen({ mode }: { mode: ExerciseListMode }) {
               ? model.partRecentLabels.get(currentPart) || '履歴なし'
               : ''
         }
-        mode={isManageMode ? 'manage' : 'single'}
+        mode={isManageMode ? 'manage' : multiMode ? 'multi' : 'single'}
+        selectedExerciseIds={selectedIds}
         frequentExercises={isManageMode ? undefined : frequentExercises}
         partColors={model.partColors}
         onDeleteExercise={requestDeleteExercise}
         onEditExercise={model.onOpenExerciseEditor}
         onReorder={model.onReorder}
-        onSelectExercise={model.onAddExercise}
+        onSelectExercise={
+          multiMode
+            ? (id) =>
+                setSelectedIds((current) =>
+                  current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+                )
+            : model.onAddExercise
+        }
         onSelectPart={model.onSelectPart}
       />
       {deleteTarget && (

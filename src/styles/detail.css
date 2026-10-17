@@ -1037,3 +1037,125 @@
   font-size: 13px;
   white-space: nowrap;
 }
+
+.multi-set-members {
+  margin: 0 14px 16px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.multi-set-members ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.multi-set-members li {
+  min-width: 0;
+  color: var(--text-secondary);
+}
+
+.multi-set-members button {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 6px;
+  color: var(--ink);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.multi-set-members button[aria-pressed='true'] {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.multi-set-row-title {
+  grid-column: 1 / -1;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.multi-set-table .detail-row {
+  min-height: 0;
+}
+
+.multi-set-round-actions {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 14px;
+  border-bottom: 2px solid var(--line);
+  background: var(--surface);
+}
+
+.multi-set-round-actions .achievement-actions {
+  grid-column: auto;
+}
+
+.multi-set-round-actions > button {
+  min-height: 40px;
+}
+
+.detail-history-control {
+  position: relative;
+  justify-self: end;
+}
+
+.multi-set-history-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 4px;
+  width: min(280px, calc(100vw - 36px));
+  max-height: 60dvh;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px;
+  background: var(--surface);
+  box-shadow: var(--elevation-dialog);
+}
+
+.multi-set-history-menu button {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  min-height: 48px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--ink);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.multi-set-history-menu button:hover,
+.multi-set-history-menu button:focus-visible {
+  outline: none;
+  background: var(--surface-soft);
+}
+
+.multi-set-history-menu button span {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.multi-set-history-menu-title {
+  border-bottom: 1px solid var(--line);
+  padding: 6px 12px 10px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 800;
+}

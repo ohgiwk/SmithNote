@@ -150,6 +150,44 @@ export function normalizeDefaultSetCount(value: unknown): number {
   return Math.max(1, Math.min(20, Math.floor(value)));
 }
 
+/**
+ * 一覧の最初の出現位置を維持し、同日・同グループの種目を１つにまとめる
+ */
+export function groupWorkoutPanels(workouts: Workout[]): Workout[][] {
+  const panels: Workout[][] = [];
+  const groups = new Map<string, Workout[]>();
+  for (const workout of workouts) {
+    if (!workout.multiSetGroupId) {
+      panels.push([workout]);
+      continue;
+    }
+    const key = JSON.stringify([workout.date, workout.multiSetGroupId]);
+    const group = groups.get(key);
+    if (group) group.push(workout);
+    else {
+      const members = [workout];
+      groups.set(key, members);
+      panels.push(members);
+    }
+  }
+  return panels.map((members) =>
+    members.sort((a, b) => (a.multiSetOrder ?? 0) - (b.multiSetOrder ?? 0)),
+  );
+}
+
+/**
+ * グループの種目をセット番号ごとに交互に並べ、存在しないセットは省く
+ */
+export function interleaveWorkoutSets(workouts: Workout[]) {
+  const count = Math.max(0, ...workouts.map((item) => item.sets.length));
+  return Array.from({ length: count }, (_, index) =>
+    workouts.flatMap((workout) => {
+      const set = workout.sets[index];
+      return set ? [{ workout, set, index }] : [];
+    }),
+  ).flat();
+}
+
 export function newSet(defaultReps?: number | null): WorkoutSet {
   return { id: uid(), weight: null, recordValue: normalizeDefaultReps(defaultReps) };
 }

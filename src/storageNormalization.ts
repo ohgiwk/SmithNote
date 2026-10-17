@@ -567,6 +567,16 @@ function normalizeWorkouts(value: unknown): State['workouts'] {
       {
         id: item.id,
         exerciseId: item.exerciseId,
+        multiSetGroupId:
+          typeof item.multiSetGroupId === 'string' && item.multiSetGroupId.trim()
+            ? item.multiSetGroupId
+            : undefined,
+        multiSetOrder:
+          typeof item.multiSetOrder === 'number' &&
+          Number.isInteger(item.multiSetOrder) &&
+          item.multiSetOrder >= 0
+            ? item.multiSetOrder
+            : undefined,
         presetId: typeof item.presetId === 'string' ? item.presetId : undefined,
         date: item.date,
         name: item.name,

@@ -1099,3 +1099,45 @@
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
+
+.set-table .home-multi-set-row-label > th {
+  padding: 8px 12px 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.home-multi-set-card .exercise-head {
+  grid-template-columns: minmax(0, 1fr) 44px;
+  padding-block: 10px;
+}
+
+.home-multi-set-card .exercise-head h2 {
+  display: grid;
+  gap: 4px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.home-multi-set-card .exercise-head .delete-workout {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 44px;
+  height: 44px;
+}
+
+.home-multi-set-heading-row {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.home-multi-set-heading-row .exercise-head-name {
+  overflow: visible;
+  overflow-wrap: anywhere;
+}

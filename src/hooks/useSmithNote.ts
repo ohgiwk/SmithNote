@@ -361,6 +361,8 @@ export function useSmithNote() {
   const actions = useMemo(
     () => ({
       addExerciseToPart: exercise.addExerciseToPart,
+      startMultiSet: workout.startMultiSet,
+      addMultiSetRound: workout.addMultiSetRound,
       addExerciseToToday: workout.addExerciseToToday,
       addSet: workout.addSet,
       copyWorkoutSetValues: workout.copyWorkoutSetValues,
@@ -381,6 +383,7 @@ export function useSmithNote() {
       moveDate: nav.moveDate,
       moveMonth: nav.moveMonth,
       moveWorkout: workout.moveWorkout,
+      openWorkoutHistory: workout.openWorkoutHistory,
       openWorkoutDetail: workout.openWorkoutDetail,
       openAnalysis,
       openExerciseGrowthAnalysis,

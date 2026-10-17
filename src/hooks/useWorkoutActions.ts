@@ -9,6 +9,7 @@ import {
   WorkoutSet,
 } from '../types';
 import {
+  uid,
   formatTimeOfDay,
   isUnstartedWorkout,
   newSet,
@@ -38,7 +39,6 @@ export function useWorkoutActions({
   showToast,
   showScreen,
   selectedDate,
-  currentWorkout,
   currentWorkoutId,
   setCurrentWorkoutId,
   selectedWorkouts,
@@ -122,6 +122,15 @@ export function useWorkoutActions({
   }
 
   /**
+   * 指定した種目記録を対象に履歴一覧を開く
+   */
+  function openWorkoutHistory(workoutId: string) {
+    if (!state.workouts.some((item) => item.id === workoutId)) return;
+    setCurrentWorkoutId(workoutId);
+    showScreen('exerciseHistory');
+  }
+
+  /**
    * 詳細画面を開き、設定したデフォルトのセット数まで不足分を補充する
    */
   function openWorkoutDetail(workoutId: string) {
@@ -136,7 +145,14 @@ export function useWorkoutActions({
       ...prev,
       workouts: prev.workouts.map((workout) => {
         const setCount = normalizeDefaultSetCount(prev.defaultSetCount);
-        if (workout.id !== workoutId || workout.sets.length >= setCount) return workout;
+        const belongsToDetail =
+          workout.id === workoutId ||
+          Boolean(
+            target.multiSetGroupId &&
+            workout.date === target.date &&
+            workout.multiSetGroupId === target.multiSetGroupId,
+          );
+        if (!belongsToDetail || workout.sets.length >= setCount) return workout;
         return {
           ...workout,
           sets: [
@@ -186,6 +202,92 @@ export function useWorkoutActions({
     }
     setCurrentWorkoutId(workout.id);
     showScreen('detail');
+  }
+
+  /**
+   * 選択順に種目をグループ化し、既存記録を保持して詳細へ進む
+   */
+  function startMultiSet(exerciseIds: string[]) {
+    if (isWorkoutDayEnded(selectedDate)) return;
+    const exercises = [...new Set(exerciseIds)].flatMap((id) => {
+      const exercise = state.exercises.find((item) => item.id === id);
+      return exercise ? [exercise] : [];
+    });
+    if (exercises.length < 2) return;
+    const groupId = uid();
+    const grouped = exercises.map((exercise, index) => ({
+      ...(state.workouts.find(
+        (item) => item.date === selectedDate && item.exerciseId === exercise.id,
+      ) ?? createWorkout(exercise, selectedDate, state.defaultReps, state.defaultSetCount)),
+      multiSetGroupId: groupId,
+      multiSetOrder: index,
+    }));
+    const replacedIds = new Set(grouped.map((item) => item.id));
+    const oldGroups = new Set(
+      grouped
+        .map((item) => state.workouts.find((old) => old.id === item.id)?.multiSetGroupId)
+        .filter(Boolean),
+    );
+    saveState((prev) => ({
+      ...prev,
+      workouts: [
+        ...prev.workouts
+          .filter((item) => !replacedIds.has(item.id))
+          .map((item) => {
+            if (
+              item.date !== selectedDate ||
+              !item.multiSetGroupId ||
+              !oldGroups.has(item.multiSetGroupId)
+            )
+              return item;
+            const next = { ...item };
+            delete next.multiSetGroupId;
+            delete next.multiSetOrder;
+            return next;
+          }),
+        ...grouped,
+      ],
+      workoutStartTimes: {
+        ...prev.workoutStartTimes,
+        [selectedDate]:
+          prev.workouts.some((item) => item.date === selectedDate) &&
+          prev.workoutStartTimes[selectedDate]
+            ? prev.workoutStartTimes[selectedDate]
+            : formatTimeOfDay(new Date()),
+      },
+    }));
+    setCurrentWorkoutId(grouped[0].id);
+    showScreen('detail');
+  }
+
+  /**
+   * 同じグループの各種目を次のラウンドまで補充する
+   */
+  function addMultiSetRound(workoutId: string) {
+    const target = state.workouts.find((item) => item.id === workoutId);
+    if (!target?.multiSetGroupId || isWorkoutDayEnded(target.date)) return;
+    saveState((prev) => {
+      const members = prev.workouts.filter(
+        (item) => item.date === target.date && item.multiSetGroupId === target.multiSetGroupId,
+      );
+      const count = Math.max(...members.map((item) => item.sets.length)) + 1;
+      return {
+        ...prev,
+        workouts: prev.workouts.map((item) =>
+          members.some((member) => member.id === item.id)
+            ? {
+                ...item,
+                sets: [
+                  ...item.sets,
+                  ...Array.from({ length: count - item.sets.length }, () =>
+                    newSet(item.measurementType === 'reps' ? prev.defaultReps : null),
+                  ),
+                ],
+              }
+            : item,
+        ),
+      };
+    });
   }
 
   /**
@@ -410,14 +512,15 @@ export function useWorkoutActions({
    * 現在のワークアウトから指定セットを削除する
    */
   function deleteSet(setId: string) {
-    if (!currentWorkout || isWorkoutDayEnded(currentWorkout.date)) return;
-    const setIndex = currentWorkout.sets.findIndex((set) => set.id === setId);
-    const deletedSet = currentWorkout.sets[setIndex];
+    const target = findWorkoutBySetId(setId);
+    if (!target || isWorkoutDayEnded(target.date)) return;
+    const setIndex = target.sets.findIndex((set) => set.id === setId);
+    const deletedSet = target.sets[setIndex];
     if (!deletedSet) return;
     saveState((prev) => ({
       ...prev,
       workouts: prev.workouts.map((workout) =>
-        workout.id === currentWorkout.id
+        workout.id === target.id
           ? { ...workout, sets: workout.sets.filter((set) => set.id !== setId) }
           : workout,
       ),
@@ -428,7 +531,7 @@ export function useWorkoutActions({
         saveState((prev) => ({
           ...prev,
           workouts: prev.workouts.map((workout) => {
-            if (workout.id !== currentWorkout.id || workout.sets.some((set) => set.id === setId)) {
+            if (workout.id !== target.id || workout.sets.some((set) => set.id === setId)) {
               return workout;
             }
             const sets = [...workout.sets];
@@ -436,31 +539,39 @@ export function useWorkoutActions({
             return { ...workout, sets };
           }),
         }));
-        setCurrentWorkoutId(currentWorkout.id);
+        setCurrentWorkoutId(target.id);
         showToast('セットを戻しました');
       },
     });
   }
 
   /**
-   * ワークアウト(種目の記録)ごと削除する
+   * ワークアウトを削除し、グループの場合は同日の全メンバーをまとめて削除する
    */
   function deleteWorkout(workoutId: string) {
     const targetIndex = state.workouts.findIndex((workout) => workout.id === workoutId);
     const target = state.workouts[targetIndex];
     if (!target || isWorkoutDayEnded(target.date)) return;
-    saveState((prev) => ({
-      ...prev,
-      workouts: prev.workouts.filter((workout) => workout.id !== workoutId),
-    }));
-    if (currentWorkoutId === workoutId) setCurrentWorkoutId(null);
-    showToast('種目の記録を削除しました', {
+    const targets = state.workouts.flatMap((item, index) =>
+      item.id === workoutId ||
+      (target.multiSetGroupId &&
+        item.date === target.date &&
+        item.multiSetGroupId === target.multiSetGroupId)
+        ? [{ workout: item, index }]
+        : [],
+    );
+    const ids = new Set(targets.map((item) => item.workout.id));
+    saveState((prev) => ({ ...prev, workouts: prev.workouts.filter((item) => !ids.has(item.id)) }));
+    if (currentWorkoutId && ids.has(currentWorkoutId)) setCurrentWorkoutId(null);
+    showToast(targets.length > 1 ? 'グループの記録を削除しました' : '種目の記録を削除しました', {
       actionLabel: '元に戻す',
       onAction: () => {
         saveState((prev) => {
-          if (prev.workouts.some((workout) => workout.id === workoutId)) return prev;
           const workouts = [...prev.workouts];
-          workouts.splice(Math.min(targetIndex, workouts.length), 0, target);
+          targets.forEach(({ workout, index }) => {
+            if (!workouts.some((item) => item.id === workout.id))
+              workouts.splice(Math.min(index, workouts.length), 0, workout);
+          });
           return { ...prev, workouts };
         });
         setCurrentWorkoutId(target.id);
@@ -494,6 +605,9 @@ export function useWorkoutActions({
   }
 
   return {
+    startMultiSet,
+    addMultiSetRound,
+    openWorkoutHistory,
     openWorkoutDetail,
     endWorkoutDay,
     resumeWorkoutDay,

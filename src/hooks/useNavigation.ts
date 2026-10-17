@@ -128,7 +128,7 @@ export function useNavigation({
    * 詳細画面を離れる際、未入力のままの空セットを取り除く
    */
   function cleanupBlankDetailSets(sourceScreen: Screen) {
-    if (sourceScreen !== 'detail' || !currentWorkout) return;
+    if (sourceScreen !== 'detail' || !currentWorkout || currentWorkout.multiSetGroupId) return;
     if (state.workoutEndTimes[currentWorkout.date]) return;
     saveState((prev) => {
       const workout = prev.workouts.find((item) => item.id === currentWorkout.id);

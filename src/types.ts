@@ -96,6 +96,8 @@ export type WorkoutSet = {
 };
 
 export type Workout = {
+  multiSetGroupId?: string;
+  multiSetOrder?: number;
   presetId?: string;
   id: string;
   exerciseId: string;

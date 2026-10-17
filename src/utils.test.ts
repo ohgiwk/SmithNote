@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   calculateWorkoutDurationMinutes,
+  groupWorkoutPanels,
+  interleaveWorkoutSets,
   calcRm,
   exerciseWeightStep,
   calendarCells,
@@ -409,5 +411,30 @@ describe('種目別の重量増減幅', () => {
     expect(
       exerciseWeightStep([...recent, history([40, 40.5], { date: '2026-09-01' })], current, 'kg'),
     ).toBe(5);
+  });
+});
+
+describe('マルチセットの並び順', () => {
+  it('異なるセット数をラウンドごとに交互に並べる', () => {
+    const a = makeWorkout([
+      { id: 'a1', weight: null, recordValue: null },
+      { id: 'a2', weight: null, recordValue: null },
+    ]);
+    const b = { ...makeWorkout([{ id: 'b1', weight: null, recordValue: null }]), id: 'w2' };
+    expect(interleaveWorkoutSets([a, b]).map((row) => row.set.id)).toEqual(['a1', 'b1', 'a2']);
+    expect(interleaveWorkoutSets([])).toEqual([]);
+  });
+});
+
+describe('ホームのグループパネル', () => {
+  it('同日・同グループを1つにまとめ、最初の位置と種目の選択順を維持する', () => {
+    const a = { ...makeWorkout([]), id: 'a', multiSetGroupId: 'g1', multiSetOrder: 1 };
+    const b = { ...a, id: 'b', multiSetOrder: 0 };
+    const single = { ...makeWorkout([]), id: 'single' };
+    const otherDay = { ...a, id: 'otherDay', date: '2026-10-17' };
+    expect(
+      groupWorkoutPanels([a, single, b, otherDay]).map((members) => members.map((item) => item.id)),
+    ).toEqual([['b', 'a'], ['single'], ['otherDay']]);
+    expect(groupWorkoutPanels([])).toEqual([]);
   });
 });
